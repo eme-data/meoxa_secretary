@@ -12,7 +12,10 @@ dependencies = [
     "pydantic-settings>=2.5",
     "python-multipart>=0.0.12",
     # Auth + crypto
-    "passlib[bcrypt]>=1.7.4",
+    # ⚠️ passlib 1.7.4 (dernière release) incompatible avec bcrypt 4.1+,
+    # qui a retiré bcrypt.__about__ et rendu strict le hash > 72 bytes.
+    "passlib>=1.7.4",
+    "bcrypt>=4.0.1,<4.1",
     "pyjwt>=2.9",
     "cryptography>=43.0",
     "pyotp>=2.9",
