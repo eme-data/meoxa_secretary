@@ -557,6 +557,71 @@ export const invitationsApi = {
     }),
 };
 
+// ---------------- Search ---------------- //
+
+export interface EmailHit {
+  id: string;
+  subject: string;
+  from_address: string;
+  snippet: string;
+  rank: number;
+}
+
+export interface MeetingHit {
+  id: string;
+  title: string;
+  excerpt: string;
+  rank: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  emails: EmailHit[];
+  meetings: MeetingHit[];
+}
+
+export const searchApi = {
+  query: (token: string, q: string) => {
+    const qs = new URLSearchParams({ q }).toString();
+    return apiFetch<SearchResponse>(`/api/v1/search?${qs}`, { token });
+  },
+};
+
+// ---------------- Email templates ---------------- //
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+}
+
+export const templatesApi = {
+  list: (token: string) =>
+    apiFetch<EmailTemplate[]>("/api/v1/emails/templates", { token }),
+  create: (
+    token: string,
+    body: { name: string; description: string; prompt: string },
+  ) =>
+    apiFetch<EmailTemplate>("/api/v1/emails/templates", {
+      method: "POST",
+      token,
+      body: JSON.stringify(body),
+    }),
+  update: (
+    token: string,
+    id: string,
+    body: { name: string; description: string; prompt: string },
+  ) =>
+    apiFetch<EmailTemplate>(`/api/v1/emails/templates/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(body),
+    }),
+  remove: (token: string, id: string) =>
+    apiFetch<void>(`/api/v1/emails/templates/${id}`, { method: "DELETE", token }),
+};
+
 // ---------------- Utils ---------------- //
 
 export function getToken(): string | null {
