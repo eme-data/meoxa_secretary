@@ -45,8 +45,14 @@ export default function BillingPage() {
       <h1 className="text-3xl font-bold">Facturation</h1>
 
       <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900/60 p-6">
-        <h2 className="text-xl font-semibold">Pack Secrétariat — 1 490 € HT</h2>
-        <p className="mt-2 text-slate-400">
+        <h2 className="text-xl font-semibold">
+          Pack Secrétariat — <span className="text-brand">1 490 € HT / an</span>
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Abonnement annuel, renouvelé automatiquement chaque année. Résiliable
+          depuis le portail client à tout moment.
+        </p>
+        <p className="mt-3 text-slate-400">
           Automatisation emails, comptes-rendus de réunions et agenda.
           Intégration clé en main à Microsoft 365.
         </p>

@@ -176,7 +176,13 @@ export default function OnboardingPage() {
 
         {step === "billing" && (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Abonnement Pack Secrétariat — 1 490 € HT</h2>
+            <h2 className="text-xl font-semibold">
+              Abonnement Pack Secrétariat — 1 490 € HT / an
+            </h2>
+            <p className="text-sm text-slate-400">
+              Abonnement annuel, renouvelé automatiquement. Tu pourras résilier ou
+              modifier ton abonnement à tout moment depuis l'onglet Facturation.
+            </p>
             <p className="text-slate-300">
               L'accès à meoxa est réservé aux abonnés actifs. Active ton abonnement pour
               débloquer la connexion Microsoft et l'automatisation.
@@ -396,32 +402,6 @@ export default function OnboardingPage() {
                 </button>
               </div>
             )}
-          </div>
-        )}
-
-        {step === "billing" && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Abonnement</h2>
-            <p className="text-slate-300">
-              Pack Secrétariat à 1 490 € HT. Tu peux démarrer l'abonnement maintenant
-              ou plus tard depuis l'onglet Facturation.
-            </p>
-            <div className="flex gap-2">
-              {!status?.steps.billing_active && (
-                <Link
-                  href="/app/billing"
-                  className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:bg-brand-dark"
-                >
-                  S'abonner
-                </Link>
-              )}
-              <button
-                onClick={() => setStep("done")}
-                className="rounded-lg border border-slate-700 px-5 py-2 font-semibold text-slate-200 hover:bg-slate-800"
-              >
-                {status?.steps.billing_active ? "Continuer" : "Plus tard"}
-              </button>
-            </div>
           </div>
         )}
 

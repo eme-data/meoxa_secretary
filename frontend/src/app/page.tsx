@@ -9,11 +9,16 @@ export default function HomePage() {
           Automatisation emails, comptes-rendus de réunions, agenda.
         </p>
         <div className="mt-8 text-5xl font-bold text-white">
-          1 490 € <span className="text-xl text-sky-400">HT</span>
+          1 490 € <span className="text-xl text-sky-400">HT / an</span>
         </div>
+        <p className="mt-1 text-sm text-slate-400">
+          Abonnement annuel, renouvelé automatiquement. Résiliable à tout moment.
+        </p>
         <ul className="mt-8 space-y-2 text-slate-200">
           <li>✓ Intégration clé en main</li>
           <li>✓ Configuration sur vos outils</li>
+          <li>✓ Utilisateurs illimités dans votre organisation</li>
+          <li>✓ Support inclus</li>
         </ul>
         <div className="mt-10 flex gap-4">
           <Link
