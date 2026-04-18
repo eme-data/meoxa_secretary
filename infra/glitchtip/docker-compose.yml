@@ -1,0 +1,93 @@
+# =============================================================================
+# GlitchTip — Sentry-compatible error monitoring, self-hosted
+#
+# Stack isolée de l'app meoxa (Postgres + Redis propres) pour ne pas coupler
+# les deploys. Conso typique : ~800 Mo RAM à l'idle.
+#
+# Usage :
+#   cd infra/glitchtip
+#   cp .env.example .env            # puis remplir GLITCHTIP_SECRET_KEY + domaine
+#   docker compose up -d
+#   docker compose exec web ./manage.py createsuperuser
+#
+# Ensuite :
+#   - Accès sur http://<host>:8001 (ou errors.meoxa.app via le reverse proxy)
+#   - Créer une organisation + un projet par stack (backend, frontend)
+#   - Copier les DSN dans les .env de meoxa_secretary
+# =============================================================================
+
+x-env: &env
+  DATABASE_URL: "postgres://glitchtip:${GLITCHTIP_DB_PASSWORD}@gt-postgres:5432/glitchtip"
+  SECRET_KEY: "${GLITCHTIP_SECRET_KEY}"
+  PORT: "8000"
+  EMAIL_URL: "${GLITCHTIP_EMAIL_URL:-consolemail://}"
+  GLITCHTIP_DOMAIN: "${GLITCHTIP_DOMAIN:-https://errors.meoxa.app}"
+  DEFAULT_FROM_EMAIL: "${GLITCHTIP_FROM_EMAIL:-noreply@meoxa.app}"
+  CELERY_WORKER_AUTOSCALE: "1,3"
+  CELERY_WORKER_MAX_TASKS_PER_CHILD: "10000"
+  # Désactive l'auto-signup — seul le super-user créé à la main peut se connecter.
+  ENABLE_USER_REGISTRATION: "false"
+  ENABLE_ORGANIZATION_CREATION: "false"
+
+services:
+  gt-postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${GLITCHTIP_DB_PASSWORD}
+      POSTGRES_DB: glitchtip
+    volumes:
+      - gt_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip"]
+      interval: 10s
+      retries: 5
+
+  gt-redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - gt_redis_data:/data
+
+  web:
+    image: glitchtip/glitchtip:latest
+    restart: always
+    depends_on:
+      gt-postgres:
+        condition: service_healthy
+      gt-redis:
+        condition: service_started
+    environment:
+      <<: *env
+      REDIS_URL: "redis://gt-redis:6379/0"
+    ports:
+      - "127.0.0.1:8001:8000"
+
+  worker:
+    image: glitchtip/glitchtip:latest
+    restart: always
+    command: ./bin/run-celery-with-beat.sh
+    depends_on:
+      gt-postgres:
+        condition: service_healthy
+      gt-redis:
+        condition: service_started
+    environment:
+      <<: *env
+      REDIS_URL: "redis://gt-redis:6379/0"
+
+  migrate:
+    image: glitchtip/glitchtip:latest
+    depends_on:
+      gt-postgres:
+        condition: service_healthy
+    command: "./manage.py migrate"
+    environment:
+      <<: *env
+      REDIS_URL: "redis://gt-redis:6379/0"
+    restart: "no"
+
+volumes:
+  gt_postgres_data:
+  gt_redis_data:

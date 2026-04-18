@@ -1,0 +1,49 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # permet de redéployer à la main depuis l'UI GitHub
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false # on ne veut pas couper un déploiement en cours
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://secretary.meoxa.app
+    steps:
+      - name: SSH → git pull + build + migrate + restart
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 20m
+          script: |
+            set -euo pipefail
+            cd /opt/meoxa_secretary
+            ./infra/scripts/deploy.sh
+
+      - name: Smoke test /api/v1/status
+        run: |
+          set -e
+          for i in 1 2 3 4 5; do
+            response=$(curl -fsS https://secretary.meoxa.app/api/v1/status || echo "FAIL")
+            if echo "$response" | grep -q '"status":"ok"'; then
+              echo "✓ status=ok"
+              exit 0
+            fi
+            if echo "$response" | grep -q '"status":"degraded"'; then
+              echo "⚠ status=degraded (config incomplète mais app up)"
+              exit 0
+            fi
+            echo "Try $i: $response"
+            sleep 5
+          done
+          echo "✗ Health check failed"
+          exit 1

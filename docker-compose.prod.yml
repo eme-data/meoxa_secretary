@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    restart: always
+    env_file: .env.prod
+    environment:
+      HF_HOME: /var/lib/meoxa/huggingface
+    volumes:
+      - meoxa_data:/var/lib/meoxa
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn meoxa_secretary.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    restart: always
+    env_file: .env.prod
+    environment:
+      HF_HOME: /var/lib/meoxa/huggingface
+    volumes:
+      - meoxa_data:/var/lib/meoxa
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A meoxa_secretary.workers.celery_app worker --loglevel=info --concurrency=4
+
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    restart: always
+    env_file: .env.prod
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A meoxa_secretary.workers.celery_app beat --loglevel=info
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+    restart: always
+    env_file: .env.prod
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./infra/certbot/www:/var/www/certbot:ro
+      - ./infra/certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+      - frontend
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./infra/certbot/www:/var/www/certbot
+      - ./infra/certbot/conf:/etc/letsencrypt
+    entrypoint: >
+      /bin/sh -c "trap exit TERM;
+      while :; do certbot renew --webroot -w /var/www/certbot --quiet;
+      sleep 12h & wait $${!}; done;"
+
+volumes:
+  postgres_data:
+  redis_data:
+  meoxa_data:
