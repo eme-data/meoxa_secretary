@@ -33,7 +33,8 @@ function Nav() {
     <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="text-xl font-bold tracking-tight">
-          meoxa<span className="text-brand">.</span>
+          Secretary<span className="text-brand">.</span>
+          <span className="ml-2 text-xs font-normal text-slate-500">by Meoxa</span>
         </Link>
         <div className="hidden gap-8 text-sm text-slate-300 md:flex">
           <a href="#fonctionnalites" className="hover:text-white">Fonctionnalités</a>
@@ -71,16 +72,21 @@ function Hero() {
         Pour les PME sous Microsoft 365
       </div>
       <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-        Ton assistant de direction
+        Secretary — le secrétariat
         <br />
         <span className="bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent">
           automatique dans Microsoft 365
         </span>
       </h1>
       <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300 md:text-xl">
-        meoxa lit tes emails et prépare tes réponses dans ton style. Il écoute tes
-        réunions Teams et rédige le compte-rendu. Il propose des créneaux depuis
-        ton calendrier. Tout en français, sans changer d'outil.
+        <strong className="text-white">Secretary</strong>, l'application éditée par
+        Meoxa, lit tes emails et prépare tes réponses dans ton style. Elle écoute
+        tes réunions Teams et rédige le compte-rendu. Elle propose des créneaux
+        depuis ton calendrier. Tout en français, sans changer d'outil.
+      </p>
+      <p className="mt-3 text-sm text-slate-400">
+        <strong>Secretary est un logiciel.</strong> Aucun humain ne lit tes
+        données — tout le traitement est automatisé.
       </p>
       <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Link
@@ -198,38 +204,39 @@ function FeaturesSection() {
       </h2>
       <p className="mx-auto mt-4 max-w-2xl text-center text-slate-400">
         Chaque fonctionnalité s'intègre dans les outils que tu utilises déjà.
-        Tu ne changes rien à ta façon de travailler — meoxa travaille à côté.
+        Tu ne changes rien à ta façon de travailler — l'application Secretary
+        travaille à côté.
       </p>
 
       <div className="mt-16 grid gap-8 md:grid-cols-3">
         <FeatureCard
           number="01"
-          title="Emails : il rédige, tu relis"
+          title="Emails : Secretary rédige, tu relis"
           bullets={[
-            "Analyse chaque email reçu dans Outlook",
-            "Rédige un brouillon de réponse dans ton style",
-            "Apparaît directement dans tes Brouillons Outlook",
+            "Secretary analyse chaque email reçu dans Outlook",
+            "Génère un brouillon de réponse dans ton style",
+            "Le brouillon apparaît directement dans tes Brouillons Outlook",
             "Tu valides en 30 secondes, ou tu édites",
           ]}
           gain="Gain typique : 3 à 5 h / semaine"
         />
         <FeatureCard
           number="02"
-          title="Réunions Teams : il écoute, résume, envoie"
+          title="Réunions Teams : Secretary écoute, résume, envoie"
           bullets={[
-            "Capte l'enregistrement Teams automatiquement",
-            "Produit un CR structuré (résumé, décisions, actions)",
-            "Envoie le CR par mail à l'organisateur",
-            "Crée les tâches extraites dans Microsoft Planner",
+            "Captation automatique de l'enregistrement Teams",
+            "CR structuré par IA : résumé, décisions, actions",
+            "CR envoyé par mail à l'organisateur en quelques minutes",
+            "Actions extraites créées automatiquement dans Microsoft Planner",
           ]}
           gain="Gain typique : 30 à 60 min par réunion"
         />
         <FeatureCard
           number="03"
-          title="Agenda : il propose, tu arbitres"
+          title="Agenda : Secretary propose, tu arbitres"
           bullets={[
-            "Analyse ton calendrier Outlook",
-            "Propose des créneaux respectant tes horaires",
+            "Analyse automatique de ton calendrier Outlook",
+            "Propose des créneaux respectant tes horaires et pauses",
             "Crée le lien Teams automatiquement",
             "Respecte ta pause déjeuner et tes jours off",
           ]}
@@ -281,7 +288,7 @@ function HowItWorksSection() {
           Opérationnel en 48 heures
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-slate-400">
-          Un onboarding guidé de 5 minutes, puis meoxa se met au travail.
+          Un onboarding guidé de 5 minutes, puis Secretary se met au travail.
           Aucune formation nécessaire pour tes équipes.
         </p>
 
@@ -298,8 +305,8 @@ function HowItWorksSection() {
           />
           <Step
             n={3}
-            title="meoxa analyse tes 30 derniers jours"
-            text="Pour apprendre ton ton, ton vocabulaire et le style de tes réponses. Les brouillons générés seront pertinents dès le premier jour."
+            title="Secretary analyse tes 30 derniers jours"
+            text="L'application indexe tes emails passés pour apprendre ton ton, ton vocabulaire et le style de tes réponses. Les brouillons générés sont pertinents dès le premier jour."
           />
           <Step
             n={4}
@@ -341,7 +348,7 @@ function SecuritySection() {
         Tes données restent les tiennes
       </h2>
       <p className="mx-auto mt-4 max-w-2xl text-center text-slate-400">
-        meoxa est conçu autour de la confidentialité. Rien ne sort de l'Union
+        Secretary est conçu autour de la confidentialité. Rien ne sort de l'Union
         européenne, tout est chiffré, tout est auditable.
       </p>
       <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -453,36 +460,40 @@ function PricingSection() {
 function FaqSection() {
   const faqs = [
     {
+      q: "Secretary, c'est un humain ou un logiciel ?",
+      a: "Secretary est exclusivement un logiciel (SaaS) édité par Meoxa. Tout le traitement de tes emails et réunions est automatisé — aucun humain de Meoxa ne lit tes données. La génération de texte s'appuie sur le modèle Claude d'Anthropic, via une API sécurisée avec contrat de sous-traitance.",
+    },
+    {
       q: "Qui lit mes emails ?",
-      a: "meoxa lit tes emails — c'est lui qui génère les brouillons. Les données sont envoyées à Anthropic (Claude) pour la génération du texte, avec un contrat de sous-traitance en place. Aucun humain de Meoxa n'a accès à tes emails. Tout est chiffré en transit et au repos.",
+      a: "L'application Secretary lit tes emails pour générer les brouillons — c'est un traitement automatisé, jamais un humain. Les données transitent uniquement vers Anthropic (Claude) pour la génération du texte, avec un DPA en place. Aucun collaborateur de Meoxa n'y a accès. Tout est chiffré en transit et au repos.",
     },
     {
       q: "Est-ce que ça envoie des emails sans mon accord ?",
-      a: "Non, jamais. meoxa rédige des brouillons. Rien n'est envoyé tant que tu ne cliques pas sur Envoyer dans ton Outlook. Tu gardes le contrôle total.",
+      a: "Non, jamais. Secretary ne fait que rédiger des brouillons. Rien n'est envoyé tant que tu ne cliques pas sur Envoyer dans ton Outlook. Tu gardes le contrôle total.",
     },
     {
       q: "Faut-il Teams Premium ?",
-      a: "Non. meoxa fonctionne avec Office 365 Business Basic et Standard. Il exploite simplement les enregistrements Teams que tu actives normalement dans tes réunions — pas besoin de l'add-on Premium.",
+      a: "Non. Secretary fonctionne avec Office 365 Business Basic et Standard. L'application exploite simplement les enregistrements Teams que tu actives normalement dans tes réunions — pas besoin de l'add-on Premium.",
     },
     {
       q: "Mes équipes doivent-elles se former ?",
-      a: "Non. Les brouillons apparaissent directement dans Outlook, les CR arrivent par mail. Tes équipes continuent à utiliser leurs outils habituels.",
+      a: "Non. Secretary est invisible : les brouillons apparaissent directement dans Outlook, les CR arrivent par mail. Tes équipes continuent à utiliser leurs outils habituels sans rien changer.",
     },
     {
       q: "Comment se passe la résiliation ?",
       a: "Depuis ton espace Facturation, un clic pour annuler. L'abonnement reste actif jusqu'à la fin de la période annuelle payée. Tu peux exporter toutes tes données avant départ via l'onglet Organisation.",
     },
     {
-      q: "Mes clients concurrents auront-ils accès à mes données ?",
-      a: "Impossible techniquement. Chaque client a ses données isolées au niveau base de données (PostgreSQL Row-Level Security). Même le code applicatif ne peut pas lire au-delà de ton tenant.",
+      q: "Mes concurrents auront-ils accès à mes données ?",
+      a: "Impossible techniquement. Chaque client de Secretary a ses données isolées au niveau base de données (PostgreSQL Row-Level Security). Même le code applicatif ne peut pas lire au-delà de ton tenant.",
     },
     {
       q: "Ça marche avec Google Workspace ?",
-      a: "Pas encore. meoxa est aujourd'hui focalisé sur Microsoft 365. Le support Google est sur notre roadmap.",
+      a: "Pas encore. Secretary est aujourd'hui focalisé sur Microsoft 365. Le support Google est sur la roadmap de Meoxa.",
     },
     {
-      q: "Qui est derrière meoxa ?",
-      a: "Meoxa, société française indépendante fondée par Mathieu d'Oliveira. Pas de fonds, pas de data broker derrière — juste un éditeur qui fait son métier.",
+      q: "Qui édite Secretary ?",
+      a: "Secretary est édité par Meoxa, société française indépendante fondée par Mathieu d'Oliveira. Pas de fonds, pas de data broker derrière — juste un éditeur logiciel qui fait son métier.",
     },
   ];
 
@@ -529,10 +540,10 @@ function FinalCta() {
             Démarrer — 1 490 € HT / an
           </Link>
           <a
-            href="mailto:contact@meoxa.app?subject=Démo Pack Secrétariat"
+            href="mailto:contact@meoxa.app?subject=Démo Secretary"
             className="rounded-lg border border-slate-700 px-8 py-4 text-base font-semibold text-slate-200 hover:bg-slate-800"
           >
-            Parler à un humain
+            Parler à l'équipe Meoxa
           </a>
         </div>
       </div>
@@ -549,10 +560,12 @@ function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
         <div>
           <div className="text-xl font-bold">
-            meoxa<span className="text-brand">.</span>
+            Secretary<span className="text-brand">.</span>
           </div>
           <p className="mt-2 text-sm text-slate-500">
             Édité par Meoxa — {new Date().getFullYear()}
+            <br />
+            Secretary est un logiciel. Aucun humain ne lit tes données.
           </p>
         </div>
         <div className="flex flex-wrap gap-6 text-sm text-slate-400">
