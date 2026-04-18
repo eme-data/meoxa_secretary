@@ -41,7 +41,7 @@ class RetentionService:
         purged = 0
 
         with SessionLocal() as db:
-            db.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": str(tenant_id)})
+            db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)})
             old = db.scalars(
                 select(MeetingTranscript).where(MeetingTranscript.created_at < cutoff)
             ).all()

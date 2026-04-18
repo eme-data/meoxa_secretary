@@ -44,7 +44,7 @@ class InvitationService:
         expires = datetime.now(timezone.utc) + INVITATION_TTL
 
         with SessionLocal() as db:
-            db.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": str(tenant_id)})
+            db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)})
             invitation = Invitation(
                 tenant_id=tenant_id,  # type: ignore[arg-type]
                 email=email.lower().strip(),
@@ -130,7 +130,7 @@ class InvitationService:
     @staticmethod
     def revoke(tenant_id: str | UUID, invitation_id: UUID) -> None:
         with SessionLocal() as db:
-            db.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": str(tenant_id)})
+            db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)})
             invitation = db.scalar(select(Invitation).where(Invitation.id == invitation_id))
             if not invitation:
                 return

@@ -226,7 +226,7 @@ class BillingService:
         class _Ctx:
             def __enter__(self):
                 self.session = SessionLocal()
-                self.session.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id})
+                self.session.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
                 return self.session
 
             def __exit__(self, exc_type, exc, tb):

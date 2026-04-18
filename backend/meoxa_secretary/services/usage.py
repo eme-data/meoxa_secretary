@@ -94,7 +94,7 @@ class UsageService:
 
             with SessionLocal() as db:
                 db.execute(
-                    text("SET LOCAL app.tenant_id = :tid"), {"tid": str(tenant_id)}
+                    text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)}
                 )
                 db.add(
                     LlmUsageEvent(

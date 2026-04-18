@@ -41,7 +41,7 @@ def microsoft_status(auth: CurrentAuth) -> dict[str, object]:
     from meoxa_secretary.models.integration import MicrosoftIntegration
 
     with SessionLocal() as db:
-        db.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": str(auth.tenant_id)})
+        db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(auth.tenant_id)})
         integration = db.scalar(
             select(MicrosoftIntegration).where(
                 MicrosoftIntegration.user_id == auth.user.id

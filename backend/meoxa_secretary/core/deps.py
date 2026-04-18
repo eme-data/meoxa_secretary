@@ -28,7 +28,7 @@ def get_db_with_tenant(tenant_id: str) -> Iterator[Session]:
     """Session DB avec `app.tenant_id` positionné pour RLS."""
     session = SessionLocal()
     try:
-        session.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id})
+        session.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
         yield session
         session.commit()
     except Exception:
@@ -63,7 +63,7 @@ def current_auth(
     # On charge l'utilisateur dans une session scopée au tenant (RLS).
     session = SessionLocal()
     try:
-        session.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id})
+        session.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
         user = session.get(User, user_id)
         if not user or not user.is_active:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Utilisateur inconnu ou désactivé")
@@ -99,7 +99,7 @@ def require_tenant_admin(auth: CurrentAuth) -> AuthContext:
 
     # On recharge le membership dans une session scopée au tenant.
     with SessionLocal() as session:
-        session.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": auth.tenant_id})
+        session.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": auth.tenant_id})
         from meoxa_secretary.models.user import Membership
 
         membership = session.scalar(

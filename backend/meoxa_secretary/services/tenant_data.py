@@ -48,7 +48,7 @@ class TenantDataService:
         archive_path = EXPORT_DIR / f"tenant-{tenant_id}-{timestamp}.zip"
 
         with SessionLocal() as session:
-            session.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": str(tenant_id)})
+            session.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)})
             payload = self._collect_all(session, tenant_id)
 
         with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -171,7 +171,7 @@ class TenantDataService:
     def _hard_delete(self, tenant_id: UUID) -> None:
         # 1. Révoquer les subscriptions Graph côté Microsoft (best-effort).
         with SessionLocal() as session:
-            session.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": str(tenant_id)})
+            session.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)})
             subs = session.scalars(select(GraphSubscription)).all()
             subs_snapshot = [(s.subscription_id, s.user_id) for s in subs]
 

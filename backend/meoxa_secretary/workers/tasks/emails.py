@@ -115,7 +115,7 @@ def _upsert_thread(tenant_id: str, message: dict) -> str | None:
             received_at = None
 
     with SessionLocal() as db:
-        db.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id})
+        db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
         thread = db.scalar(
             select(EmailThread).where(
                 EmailThread.ms_conversation_id == conversation_id
@@ -164,7 +164,7 @@ def _upsert_thread(tenant_id: str, message: dict) -> str | None:
 def draft_reply(self, thread_id: str, tenant_id: str, user_id: str) -> bool:
     """Génère un brouillon via Claude + crée un draft Outlook via Graph."""
     with SessionLocal() as db:
-        db.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id})
+        db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
         thread = db.scalar(select(EmailThread).where(EmailThread.id == thread_id))
         if not thread:
             return False
@@ -201,7 +201,7 @@ def draft_reply(self, thread_id: str, tenant_id: str, user_id: str) -> bool:
 
     # Persiste suggestion + status + draft_id
     with SessionLocal() as db:
-        db.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id})
+        db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
         thread = db.scalar(select(EmailThread).where(EmailThread.id == thread_id))
         if thread:
             thread.suggested_reply = suggestion

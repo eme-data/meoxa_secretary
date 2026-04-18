@@ -97,7 +97,7 @@ class PlannerService:
             )
             if transcript:
                 db.execute(
-                    text("SET LOCAL app.tenant_id = :tid"),
+                    text("SELECT set_config('app.tenant_id', :tid, true)"),
                     {"tid": str(transcript.tenant_id)},
                 )
                 transcript.planner_task_ids_json = json.dumps(task_ids)

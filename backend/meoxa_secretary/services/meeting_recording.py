@@ -375,7 +375,8 @@ class MeetingRecordingService:
             def __enter__(self):
                 self.session = SessionLocal()
                 self.session.execute(
-                    text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id}
+                    text("SELECT set_config('app.tenant_id', :tid, true)"),
+                    {"tid": tenant_id},
                 )
                 return self.session
 

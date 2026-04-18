@@ -39,7 +39,7 @@ def tenant_session(tenant_id: str) -> Iterator[Session]:
     """
     session = SessionLocal()
     try:
-        session.execute(text("SET LOCAL app.tenant_id = :tid"), {"tid": tenant_id})
+        session.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
         yield session
         session.commit()
     except Exception:
