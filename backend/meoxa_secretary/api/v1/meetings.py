@@ -1,4 +1,4 @@
-"""Routes — réunions, bot Teams, transcripts."""
+"""Routes — réunions (pipeline OneDrive recordings)."""
 
 from datetime import datetime
 from uuid import UUID
@@ -9,17 +9,8 @@ from sqlalchemy import select
 
 from meoxa_secretary.core.deps import CurrentAuth, TenantDB
 from meoxa_secretary.models.meeting import Meeting, MeetingStatus
-from meoxa_secretary.workers.tasks.meetings import schedule_meeting_bot
 
 router = APIRouter()
-
-
-class MeetingScheduleIn(BaseModel):
-    title: str
-    join_url: str
-    starts_at: datetime
-    ends_at: datetime | None = None
-    organizer_email: str
 
 
 class MeetingOut(BaseModel):
@@ -35,24 +26,6 @@ class MeetingOut(BaseModel):
 def list_meetings(db: TenantDB, _: CurrentAuth) -> list[MeetingOut]:
     meetings = db.scalars(select(Meeting).order_by(Meeting.starts_at.desc())).all()
     return [MeetingOut.model_validate(m) for m in meetings]
-
-
-@router.post("/schedule", response_model=MeetingOut, status_code=status.HTTP_201_CREATED)
-def schedule_bot(body: MeetingScheduleIn, db: TenantDB, auth: CurrentAuth) -> MeetingOut:
-    """Planifie l'envoi du bot Teams sur une réunion donnée."""
-    meeting = Meeting(
-        tenant_id=auth.tenant_id,  # type: ignore[arg-type]
-        title=body.title,
-        join_url=body.join_url,
-        starts_at=body.starts_at,
-        ends_at=body.ends_at,
-        organizer_email=body.organizer_email,
-        status=MeetingStatus.SCHEDULED,
-    )
-    db.add(meeting)
-    db.flush()
-    schedule_meeting_bot.delay(str(meeting.id), auth.tenant_id)
-    return MeetingOut.model_validate(meeting)
 
 
 @router.get("/{meeting_id}", response_model=MeetingOut)
