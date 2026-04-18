@@ -298,29 +298,35 @@ phase_nginx_config() {
 
 # ------------------- Phase 9 : premier démarrage -------------------
 
-COMPOSE="docker compose -f $INSTALL_DIR/docker-compose.prod.yml --env-file $INSTALL_DIR/.env.prod"
+# Wrapper paresseux : $INSTALL_DIR n'est connu qu'après phase_config().
+compose() {
+    docker compose \
+        -f "$INSTALL_DIR/docker-compose.prod.yml" \
+        --env-file "$INSTALL_DIR/.env.prod" \
+        "$@"
+}
 
 phase_build_and_start() {
     log "Build des images Docker (peut prendre 5-10 min)"
     cd "$INSTALL_DIR"
-    $COMPOSE build
+    compose build
 
     log "Démarrage de Postgres + Redis"
-    $COMPOSE up -d postgres redis
+    compose up -d postgres redis
 
     log "Attente de Postgres (healthcheck)"
     for _ in {1..60}; do
-        if $COMPOSE ps postgres --format json 2>/dev/null | grep -q '"Health":"healthy"'; then
+        if compose ps postgres --format json 2>/dev/null | grep -q '"Health":"healthy"'; then
             break
         fi
         sleep 2
     done
 
     log "Application des migrations Alembic"
-    $COMPOSE run --rm backend alembic upgrade head
+    compose run --rm backend alembic upgrade head
 
     log "Démarrage de la stack complète (sans nginx)"
-    $COMPOSE up -d backend worker scheduler frontend
+    compose up -d backend worker scheduler frontend
     ok "Services applicatifs lancés"
 }
 
@@ -339,14 +345,14 @@ phase_certificate() {
         log "Obtention du certificat Let's Encrypt pour $APP_DOMAIN"
         # Le bloc 443 de Nginx référence le cert — on ne peut pas lancer nginx
         # avant d'avoir le cert. On utilise certbot en standalone pour le 1er challenge.
-        $COMPOSE run --rm -p 80:80 certbot certonly --standalone \
+        compose run --rm -p 80:80 certbot certonly --standalone \
             -d "$APP_DOMAIN" \
             --email "$LETSENCRYPT_EMAIL" \
             --agree-tos --non-interactive --no-eff-email
     fi
 
     log "Démarrage de Nginx"
-    $COMPOSE up -d nginx certbot
+    compose up -d nginx certbot
     ok "Nginx + auto-renouvellement Let's Encrypt actifs"
 }
 
@@ -355,7 +361,7 @@ phase_certificate() {
 phase_bootstrap_admin() {
     log "Création du super-admin plateforme"
     cd "$INSTALL_DIR"
-    $COMPOSE exec -T \
+    compose exec -T \
         -e ADMIN_EMAIL="$ADMIN_EMAIL" \
         -e ADMIN_PASSWORD="$ADMIN_PASSWORD" \
         -e ADMIN_ORG_NAME="$ADMIN_ORG_NAME" \
