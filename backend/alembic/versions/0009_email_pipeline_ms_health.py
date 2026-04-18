@@ -1,6 +1,6 @@
 """email pipeline fields + ms integration health
 
-Revision ID: 0009_email_pipeline_and_ms_health
+Revision ID: 0009_email_pipeline_ms_health
 Revises: 0008_usage_invitations_planner
 Create Date: 2026-04-18
 """
@@ -10,7 +10,7 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0009_email_pipeline_and_ms_health"
+revision: str = "0009_email_pipeline_ms_health"
 down_revision: str | None = "0008_usage_invitations_planner"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
