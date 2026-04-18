@@ -155,6 +155,45 @@ Pour exiger la CI verte avant merge sur `main` :
 
 2 000 min/mois. Avec concurrency cancel + path filters + cache, un push typique consomme 3-5 min. Suffit pour ~400 pushes/mois. Si besoin d'illimité : self-hosted runner sur le VPS (voir section "Self-hosted runner" dans la doc GitHub).
 
+## Monitoring externe (UptimeRobot)
+
+Surveillance de disponibilité gratuite, alerte mail en cas de panne.
+
+1. Créer un compte sur [uptimerobot.com](https://uptimerobot.com) (free tier : 50 monitors, ping 5 min)
+2. **Add New Monitor** :
+   - Type : **HTTP(s)**
+   - URL : `https://secretary.meoxa.app/api/v1/status`
+   - Monitoring Interval : 5 minutes
+   - Keyword filtering (optionnel) : mot-clé attendu `"ok"`
+   - Alert contacts : ton email + éventuellement SMS
+3. Répéter pour le frontend : `https://secretary.meoxa.app/`
+4. Activer la **Public Status Page** (Settings → Public Status Pages)
+5. Ajouter cette URL dans le footer (actuellement `stats.uptimerobot.com/meoxa` — à adapter)
+
+## Analytics RGPD (Plausible)
+
+Alternative à Google Analytics sans bandeau cookie (pas de tracker persistant, IP anonymisée).
+
+**Option Cloud** (9 €/mois) : compte sur [plausible.io](https://plausible.io), puis :
+```
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=secretary.meoxa.app
+```
+
+**Option self-hosted** (gratuit) : Plausible Community Edition à côté de GlitchTip sur
+le VPS, exposée sur `analytics.meoxa.app`. Guide :
+[plausible.io/docs/self-hosting](https://plausible.io/docs/self-hosting).
+```
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=secretary.meoxa.app
+NEXT_PUBLIC_PLAUSIBLE_SRC=https://analytics.meoxa.app/js/script.js
+```
+
+## Pages légales
+
+`/legal/mentions-legales`, `/legal/cgv`, `/legal/confidentialite`, `/legal/cookies`
+sont scaffoldées. Les champs `{{PLACEHOLDER}}` sont à compléter avec les infos
+société Meoxa (SIREN, RCS, adresse, forme juridique) avant mise en ligne publique.
+Les CGV sont à faire relire par un avocat avant usage commercial.
+
 ## Licence
 
 Propriétaire — Meoxa © 2026.
