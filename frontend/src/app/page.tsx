@@ -556,34 +556,65 @@ function FinalCta() {
 // ============================================================================
 function Footer() {
   return (
-    <footer className="bg-slate-950 py-10">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
-        <div>
+    <footer className="border-t border-slate-800 bg-slate-950 py-12">
+      <div className="mx-auto grid max-w-6xl gap-10 px-6 md:grid-cols-4">
+        <div className="md:col-span-2">
           <div className="text-xl font-bold">
             Secretary<span className="text-brand">.</span>
           </div>
           <p className="mt-2 text-sm text-slate-500">
-            Édité par Meoxa — {new Date().getFullYear()}
+            Édité par <strong>Meoxa</strong>, société française indépendante.
             <br />
             Secretary est un logiciel. Aucun humain ne lit tes données.
           </p>
+          <p className="mt-4 text-xs text-slate-600">
+            © {new Date().getFullYear()} Meoxa. Tous droits réservés.
+          </p>
         </div>
-        <div className="flex flex-wrap gap-6 text-sm text-slate-400">
-          <Link href="/login" className="hover:text-white">
-            Se connecter
-          </Link>
-          <Link href="/signup" className="hover:text-white">
-            Créer un compte
-          </Link>
-          <a href="mailto:contact@meoxa.app" className="hover:text-white">
-            Contact
-          </a>
-          <a href="#securite" className="hover:text-white">
-            Sécurité
-          </a>
-          <a href="#tarifs" className="hover:text-white">
-            Tarifs
-          </a>
+
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Produit
+          </h4>
+          <ul className="mt-3 space-y-2 text-sm text-slate-500">
+            <li><a href="#fonctionnalites" className="hover:text-white">Fonctionnalités</a></li>
+            <li><a href="#tarifs" className="hover:text-white">Tarifs</a></li>
+            <li><a href="#securite" className="hover:text-white">Sécurité</a></li>
+            <li><a href="#faq" className="hover:text-white">FAQ</a></li>
+            <li>
+              <a
+                href="https://stats.uptimerobot.com/meoxa"
+                className="hover:text-white"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Status ↗
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Juridique
+          </h4>
+          <ul className="mt-3 space-y-2 text-sm text-slate-500">
+            <li><Link href="/legal/mentions-legales" className="hover:text-white">Mentions légales</Link></li>
+            <li><Link href="/legal/cgv" className="hover:text-white">CGV</Link></li>
+            <li><Link href="/legal/confidentialite" className="hover:text-white">Confidentialité</Link></li>
+            <li><Link href="/legal/cookies" className="hover:text-white">Cookies</Link></li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="mx-auto mt-10 max-w-6xl border-t border-slate-900 px-6 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
+          <div className="flex gap-4">
+            <Link href="/login" className="hover:text-slate-300">Se connecter</Link>
+            <Link href="/signup" className="hover:text-slate-300">Créer un compte</Link>
+            <a href="mailto:contact@meoxa.app" className="hover:text-slate-300">Contact</a>
+          </div>
+          <div>Hébergé en France · Conforme RGPD · Données chiffrées</div>
         </div>
       </div>
     </footer>
