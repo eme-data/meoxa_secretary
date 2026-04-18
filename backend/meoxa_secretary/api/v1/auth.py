@@ -1,9 +1,11 @@
 """Routes d'authentification : signup, login (+ MFA), refresh, me."""
 
+from datetime import datetime
 from typing import Annotated
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr
 from slugify import slugify
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -252,9 +254,6 @@ def _client_ip(request: Request) -> str | None:
 # ---------------- Acceptation d'invitation ----------------
 
 
-from pydantic import BaseModel, EmailStr  # noqa: E402
-
-
 class InvitationAcceptRequest(BaseModel):
     token: str
     password: str
@@ -314,6 +313,3 @@ def accept_invitation(
         ip_address=_client_ip(request),
     )
     return _issue_tokens(user_id=str(user.id), tenant_id=tenant_id)
-
-
-from datetime import datetime  # noqa: E402
