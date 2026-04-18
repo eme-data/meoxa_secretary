@@ -47,7 +47,7 @@ def render_dpa_html(
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>DPA — {tenant.name} / MDO Services</title>
+<title>DPA — {tenant.name} / Meoxa</title>
 <style>
   @page {{ size: A4; margin: 20mm; }}
   body {{ font-family: Georgia, serif; color: #111; line-height: 1.5; max-width: 760px; margin: 2em auto; padding: 0 1em; }}
@@ -80,8 +80,8 @@ def render_dpa_html(
   <strong>Date d'effet :</strong> {date_str}<br>
   <strong>Responsable du traitement (Client) :</strong> {legal_name}<br>
   <strong>Adresse :</strong> {address}<br>
-  <strong>Sous-traitant :</strong> MDO Services — {tenant.name if tenant else ''} (le « Prestataire »)<br>
-  <strong>Contact DPO Prestataire :</strong> mathieu@mdoservices.fr<br>
+  <strong>Sous-traitant :</strong> Meoxa — {tenant.name if tenant else ''} (le « Prestataire »)<br>
+  <strong>Contact DPO Prestataire :</strong> dpo@meoxa.app<br>
   {f'<strong>DPO / contact Client :</strong> {dpo_email}<br>' if dpo_email else ''}
 </div>
 
@@ -177,7 +177,7 @@ définitivement supprimées de toutes les bases et sauvegardes accessibles.</p>
     Signature :
   </div>
   <div>
-    <strong>Pour le Prestataire — MDO Services</strong><br>
+    <strong>Pour le Prestataire — Meoxa</strong><br>
     Mathieu d'Oliveira<br>
     Fondateur<br>
     Fait le {date_str}<br>

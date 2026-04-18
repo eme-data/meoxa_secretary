@@ -1,7 +1,7 @@
 """Promeut un utilisateur existant au rôle super-admin plateforme.
 
 Usage :
-    docker compose exec backend python -m meoxa_secretary.scripts.promote_superadmin mathieu@mdoservices.fr
+    docker compose exec backend python -m meoxa_secretary.scripts.promote_superadmin contact@meoxa.app
 """
 
 import sys

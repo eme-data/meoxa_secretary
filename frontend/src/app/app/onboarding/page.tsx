@@ -347,7 +347,7 @@ export default function OnboardingPage() {
               rows={5}
               value={signature}
               onChange={(e) => setSignature(e.target.value)}
-              placeholder={"Cordialement,\nPrénom Nom\nMDO Services — 06 XX XX XX XX"}
+              placeholder={"Cordialement,\nPrénom Nom\nMon entreprise — 06 XX XX XX XX"}
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2 font-mono text-sm"
             />
             <div className="flex gap-2">

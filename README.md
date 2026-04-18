@@ -1,6 +1,6 @@
 # meoxa_secretary
 
-Application SaaS multi-tenant qui implémente le **Pack Secrétariat** de MDO Services (1490 € HT) :
+Application SaaS multi-tenant qui implémente le **Pack Secrétariat** de Meoxa (1490 € HT / an) :
 automatisation des emails, comptes-rendus de réunions par bot Teams, et gestion d'agenda,
 le tout intégré à Microsoft 365.
 
@@ -48,7 +48,7 @@ make migrate         # applique les migrations Alembic
 make seed            # crée un tenant + un super-admin de démo (demo@meoxa.local)
 
 # Promouvoir un autre user en super-admin :
-make superadmin email=mathieu@mdoservices.fr
+make superadmin email=contact@meoxa.app
 ```
 
 - API : http://localhost:8000/docs
@@ -157,4 +157,4 @@ Pour exiger la CI verte avant merge sur `main` :
 
 ## Licence
 
-Propriétaire — MDO Services © 2026.
+Propriétaire — Meoxa © 2026.

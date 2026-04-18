@@ -13,7 +13,7 @@ class Tenant(Base, UUIDMixin, TimestampMixin):
 
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)
-    # Domaine email primaire (ex: "mdoservices.fr") — utilisé pour auto-routing des invitations.
+    # Domaine email primaire (ex: "meoxa.app") — utilisé pour auto-routing des invitations.
     primary_domain: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 

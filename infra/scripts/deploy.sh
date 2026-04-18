@@ -41,7 +41,7 @@ $COMPOSE up -d
 if [[ ! -d "infra/certbot/conf/live/${APP_DOMAIN}" ]]; then
     echo "→ Premier lancement : obtention du certificat Let's Encrypt pour ${APP_DOMAIN}"
     $COMPOSE run --rm certbot certonly --webroot -w /var/www/certbot \
-        -d "${APP_DOMAIN}" --email "mathieu@mdoservices.fr" \
+        -d "${APP_DOMAIN}" --email "${LETSENCRYPT_EMAIL:-contact@meoxa.app}" \
         --agree-tos --non-interactive
     $COMPOSE restart nginx
 fi

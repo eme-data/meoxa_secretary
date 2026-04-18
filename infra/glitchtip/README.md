@@ -31,7 +31,7 @@ publiquement en HTTPS, voir la section suivante.
    cd /opt/meoxa_secretary
    docker compose -f docker-compose.prod.yml run --rm certbot certonly \
      --webroot -w /var/www/certbot -d errors.meoxa.app \
-     --email mathieu@mdoservices.fr --agree-tos --non-interactive
+     --email contact@meoxa.app --agree-tos --non-interactive
    ```
 3. **Conf Nginx** : déposer le fichier `nginx-glitchtip.conf` (fourni ici) dans
    `/opt/meoxa_secretary/infra/nginx/conf.d/glitchtip.conf`, puis :
@@ -42,7 +42,7 @@ publiquement en HTTPS, voir la section suivante.
 ## Configuration des projets
 
 1. Login sur https://errors.meoxa.app
-2. **Créer une Organization** (ex : MDO Services)
+2. **Créer une Organization** (ex : Meoxa)
 3. **Créer 2 Projects** :
    - `meoxa-backend` (platform: Python)
    - `meoxa-frontend` (platform: JavaScript/Next.js)

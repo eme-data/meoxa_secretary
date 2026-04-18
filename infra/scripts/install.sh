@@ -7,10 +7,10 @@
 #
 # Variables optionnelles (exportables pour rendre l'install non-interactive) :
 #   APP_DOMAIN           (défaut : secretary.meoxa.app)
-#   LETSENCRYPT_EMAIL    (défaut : mathieu@mdoservices.fr)
+#   LETSENCRYPT_EMAIL    (défaut : contact@meoxa.app)
 #   ADMIN_EMAIL          (défaut : valeur saisie au prompt)
 #   ADMIN_PASSWORD       (défaut : valeur saisie au prompt, masquée)
-#   ADMIN_ORG_NAME       (défaut : MDO Services)
+#   ADMIN_ORG_NAME       (défaut : Meoxa)
 #   INSTALL_DIR          (défaut : /opt/meoxa_secretary)
 #   REPO_URL             (défaut : détecté depuis le répertoire courant)
 #   SKIP_SWAP            (défaut : 0, mettre 1 pour ne pas créer de swap)
@@ -83,8 +83,8 @@ phase_checks() {
 phase_config() {
     log "Configuration"
     prompt_default "Domaine de l'app" "secretary.meoxa.app" APP_DOMAIN
-    prompt_default "Email Let's Encrypt / admin" "mathieu@mdoservices.fr" LETSENCRYPT_EMAIL
-    prompt_default "Nom de l'organisation (super-admin)" "MDO Services" ADMIN_ORG_NAME
+    prompt_default "Email Let's Encrypt / admin" "contact@meoxa.app" LETSENCRYPT_EMAIL
+    prompt_default "Nom de l'organisation (super-admin)" "Meoxa" ADMIN_ORG_NAME
     prompt_default "Email du premier super-admin" "$LETSENCRYPT_EMAIL" ADMIN_EMAIL
     if [[ -z "${ADMIN_PASSWORD:-}" ]]; then
         while true; do

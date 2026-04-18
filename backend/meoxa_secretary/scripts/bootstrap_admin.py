@@ -23,7 +23,7 @@ from meoxa_secretary.models.user import Membership, Role, User
 def main() -> None:
     email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
     password = os.environ.get("ADMIN_PASSWORD", "")
-    org_name = os.environ.get("ADMIN_ORG_NAME", "MDO Services")
+    org_name = os.environ.get("ADMIN_ORG_NAME", "Meoxa")
     full_name = os.environ.get("ADMIN_FULL_NAME", org_name + " admin")
 
     if not email or not password:

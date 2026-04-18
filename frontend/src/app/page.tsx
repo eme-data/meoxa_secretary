@@ -345,7 +345,7 @@ function SecuritySection() {
         européenne, tout est chiffré, tout est auditable.
       </p>
       <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <SecurityCard title="Hébergement UE" text="Serveur dédié en France, opéré par MDO Services. Aucune donnée ne transite hors UE sans clauses contractuelles types." />
+        <SecurityCard title="Hébergement UE" text="Serveur dédié en France, opéré par Meoxa. Aucune donnée ne transite hors UE sans clauses contractuelles types." />
         <SecurityCard title="Chiffrement Fernet" text="Tous les secrets applicatifs (API keys, tokens OAuth) sont chiffrés au repos. TLS 1.3 sur toutes les communications externes." />
         <SecurityCard title="Isolation multi-tenant" text="PostgreSQL Row-Level Security garantit l'isolation au niveau base de données. Aucune requête cross-tenant n'est techniquement possible." />
         <SecurityCard title="RGPD natif" text="Export en un clic, droit à l'oubli, contrat de sous-traitance (DPA) généré automatiquement, rétention configurable." />
@@ -428,7 +428,7 @@ function PricingSection() {
                 Démarrer maintenant
               </Link>
               <a
-                href="mailto:mathieu@mdoservices.fr?subject=Démo Pack Secrétariat"
+                href="mailto:contact@meoxa.app?subject=Démo Pack Secrétariat"
                 className="flex-1 rounded-lg border border-slate-700 px-6 py-4 text-center text-base font-semibold text-slate-200 hover:bg-slate-800"
               >
                 Demander une démo
@@ -454,7 +454,7 @@ function FaqSection() {
   const faqs = [
     {
       q: "Qui lit mes emails ?",
-      a: "meoxa lit tes emails — c'est lui qui génère les brouillons. Les données sont envoyées à Anthropic (Claude) pour la génération du texte, avec un contrat de sous-traitance en place. Aucun humain de MDO Services n'a accès à tes emails. Tout est chiffré en transit et au repos.",
+      a: "meoxa lit tes emails — c'est lui qui génère les brouillons. Les données sont envoyées à Anthropic (Claude) pour la génération du texte, avec un contrat de sous-traitance en place. Aucun humain de Meoxa n'a accès à tes emails. Tout est chiffré en transit et au repos.",
     },
     {
       q: "Est-ce que ça envoie des emails sans mon accord ?",
@@ -482,7 +482,7 @@ function FaqSection() {
     },
     {
       q: "Qui est derrière meoxa ?",
-      a: "MDO Services, société française indépendante fondée par Mathieu d'Oliveira. Pas de fonds, pas de data broker derrière — juste un éditeur qui fait son métier.",
+      a: "Meoxa, société française indépendante fondée par Mathieu d'Oliveira. Pas de fonds, pas de data broker derrière — juste un éditeur qui fait son métier.",
     },
   ];
 
@@ -529,7 +529,7 @@ function FinalCta() {
             Démarrer — 1 490 € HT / an
           </Link>
           <a
-            href="mailto:mathieu@mdoservices.fr?subject=Démo Pack Secrétariat"
+            href="mailto:contact@meoxa.app?subject=Démo Pack Secrétariat"
             className="rounded-lg border border-slate-700 px-8 py-4 text-base font-semibold text-slate-200 hover:bg-slate-800"
           >
             Parler à un humain
@@ -552,7 +552,7 @@ function Footer() {
             meoxa<span className="text-brand">.</span>
           </div>
           <p className="mt-2 text-sm text-slate-500">
-            Édité par MDO Services — {new Date().getFullYear()}
+            Édité par Meoxa — {new Date().getFullYear()}
           </p>
         </div>
         <div className="flex flex-wrap gap-6 text-sm text-slate-400">
@@ -562,7 +562,7 @@ function Footer() {
           <Link href="/signup" className="hover:text-white">
             Créer un compte
           </Link>
-          <a href="mailto:mathieu@mdoservices.fr" className="hover:text-white">
+          <a href="mailto:contact@meoxa.app" className="hover:text-white">
             Contact
           </a>
           <a href="#securite" className="hover:text-white">
