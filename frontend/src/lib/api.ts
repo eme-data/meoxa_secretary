@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// En prod (nginx proxie /api/ vers le backend), chaîne vide = URLs relatives.
+// En dev (API sur un autre port), mettre NEXT_PUBLIC_API_URL dans .env.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export class ApiError extends Error {
   constructor(
