@@ -34,21 +34,24 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-    with connectable.connect() as connection:
-        # Par défaut Alembic crée `alembic_version.version_num` en VARCHAR(32),
-        # ce qui coupe les revisions à noms descriptifs > 32 car. On élargit
-        # préemptivement — no-op si la table n'existe pas encore (1re install).
-        try:
-            connection.execute(
+
+    # Par défaut Alembic crée `alembic_version.version_num` en VARCHAR(32),
+    # ce qui coupe les revisions à noms descriptifs > 32 car. On élargit
+    # préemptivement sur une connexion dédiée pour ne pas contaminer la
+    # transaction de migration en cas d'erreur (table inexistante au 1er run).
+    try:
+        with connectable.connect() as prep:
+            prep.execute(
                 text(
                     "ALTER TABLE alembic_version "
                     "ALTER COLUMN version_num TYPE varchar(128)"
                 )
             )
-            connection.commit()
-        except Exception:
-            pass
+            prep.commit()
+    except Exception:
+        pass  # table pas encore créée (1re install) — no-op
 
+    with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
