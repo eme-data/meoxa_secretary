@@ -255,6 +255,22 @@ TENANT_SETTINGS: tuple[SettingDef, ...] = (
         "Incoming Webhook → Configurer.",
         "secret",
     ),
+    # Notion (connecteur sortant)
+    SettingDef(
+        "notion.api_key",
+        "Notion — Token d'intégration",
+        "Internal Integration Token Notion (ntn_...). Crée l'intégration sur "
+        "https://www.notion.so/my-integrations, puis partage la database avec elle.",
+        "secret",
+    ),
+    SettingDef(
+        "notion.cr_database_id",
+        "Notion — Database CR",
+        "ID (32 hex) de la database Notion où pousser les comptes-rendus. "
+        "Visible dans l'URL de la database.",
+        "string",
+        default="",
+    ),
 )
 
 PLATFORM_BY_KEY = {s.key: s for s in PLATFORM_SETTINGS}

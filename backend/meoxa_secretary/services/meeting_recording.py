@@ -295,6 +295,18 @@ class MeetingRecordingService:
             except Exception as exc:
                 logger.warning("recording.planner.enqueue_failed", error=str(exc))
 
+        # Push Notion si configuré (async).
+        if summary_md:
+            try:
+                from meoxa_secretary.workers.tasks.notion_push import push_cr_to_notion
+
+                push_cr_to_notion.delay(
+                    tenant_id=str(tenant_id),
+                    meeting_id=meeting_id,
+                )
+            except Exception as exc:
+                logger.warning("recording.notion.enqueue_failed", error=str(exc))
+
         # Notification Slack / Teams (best-effort).
         if summary_md:
             try:

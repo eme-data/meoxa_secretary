@@ -147,6 +147,28 @@ async def push_to_outlook(
     return EmailThreadOut.model_validate(thread)
 
 
+@router.post("/{thread_id}/mark-sent", response_model=EmailThreadOut)
+def mark_thread_sent(
+    thread_id: UUID,
+    body: SuggestionUpdate,
+    db: TenantDB,
+    _: CurrentAuth,
+) -> EmailThreadOut:
+    """Capture la version finale envoyée par l'user (pour le feedback loop)."""
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
+
+    thread = db.get(EmailThread, thread_id)
+    if not thread:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Thread introuvable")
+    thread.sent_reply = body.suggested_reply
+    thread.sent_at = _dt.now(_tz.utc)
+    thread.status = EmailStatus.SENT
+    db.commit()
+    db.refresh(thread)
+    return EmailThreadOut.model_validate(thread)
+
+
 @router.post("/{thread_id}/ignore", response_model=EmailThreadOut)
 def ignore_thread(thread_id: UUID, db: TenantDB, _: CurrentAuth) -> EmailThreadOut:
     thread = db.get(EmailThread, thread_id)

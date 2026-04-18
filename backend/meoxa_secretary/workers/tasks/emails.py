@@ -221,8 +221,16 @@ def _upsert_thread(
     max_retries=3,
     default_retry_delay=60,
 )
-def draft_reply(self, thread_id: str, tenant_id: str, user_id: str) -> bool:
+def draft_reply(
+    self,
+    thread_id: str,
+    tenant_id: str,
+    user_id: str,
+    template_prompt: str | None = None,
+) -> bool:
     """Génère un brouillon via Claude + crée un draft Outlook via Graph."""
+    from meoxa_secretary.services.feedback import get_recent_corrections
+
     with SessionLocal() as db:
         db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
         thread = db.scalar(select(EmailThread).where(EmailThread.id == thread_id))
@@ -231,6 +239,7 @@ def draft_reply(self, thread_id: str, tenant_id: str, user_id: str) -> bool:
         body_text = thread.body_text or thread.snippet
         subject = thread.subject
         ms_message_id = thread.ms_message_id
+        few_shot = get_recent_corrections(db, tenant_id)
 
     if not body_text or not ms_message_id:
         logger.info("emails.draft.skipped_empty", thread_id=thread_id)
@@ -240,6 +249,8 @@ def draft_reply(self, thread_id: str, tenant_id: str, user_id: str) -> bool:
         suggestion = LLMService(tenant_id=tenant_id).draft_email_reply(
             email_body=body_text,
             thread_context=f"Sujet : {subject}",
+            template_prompt=template_prompt,
+            few_shot_examples=few_shot or None,
         )
     except Exception as exc:
         logger.exception("emails.draft.llm_failed", error=str(exc))

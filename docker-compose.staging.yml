@@ -1,0 +1,89 @@
+# Stack de staging — isolée de la prod, sur le même VPS.
+#
+# Usage :
+#   cd /opt/meoxa_secretary
+#   git checkout staging            # branche dédiée staging
+#   cp .env.prod .env.staging       # puis éditer : APP_DOMAIN, ports, secrets propres
+#   docker compose -f docker-compose.staging.yml --env-file .env.staging up -d
+#
+# Notes :
+#  - Ports différents (8100/8101) pour ne pas entrer en conflit avec la prod
+#  - Volumes séparés préfixés `staging_`
+#  - Pas de Nginx ni certbot (accès direct sur les ports, ou à exposer sous
+#    staging.meoxa.app via une conf Nginx dédiée côté prod compose)
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - staging_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - staging_redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    env_file: .env.staging
+    environment:
+      HF_HOME: /var/lib/meoxa/huggingface
+      ENVIRONMENT: staging
+    volumes:
+      - staging_meoxa_data:/var/lib/meoxa
+    ports:
+      - "127.0.0.1:8100:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: uvicorn meoxa_secretary.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    env_file: .env.staging
+    environment:
+      HF_HOME: /var/lib/meoxa/huggingface
+      ENVIRONMENT: staging
+    volumes:
+      - staging_meoxa_data:/var/lib/meoxa
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: celery -A meoxa_secretary.workers.celery_app worker --loglevel=info --concurrency=2
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    env_file: .env.staging
+    ports:
+      - "127.0.0.1:8101:3000"
+
+volumes:
+  staging_postgres_data:
+  staging_redis_data:
+  staging_meoxa_data:
