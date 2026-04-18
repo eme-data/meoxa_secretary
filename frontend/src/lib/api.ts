@@ -29,6 +29,12 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     const detail = await response.json().catch(() => ({ detail: response.statusText }));
+    // 402 Payment Required → redirige vers la facturation.
+    if (response.status === 402 && typeof window !== "undefined") {
+      if (!window.location.pathname.startsWith("/app/billing")) {
+        window.location.href = "/app/billing";
+      }
+    }
     throw new ApiError(response.status, detail.detail ?? "Erreur inconnue");
   }
 
