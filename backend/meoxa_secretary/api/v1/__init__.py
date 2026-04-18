@@ -14,6 +14,7 @@ from meoxa_secretary.api.v1 import (
     status,
     team,
     tenant,
+    tenant_insights,
     tenant_stats,
     webhooks,
 )
@@ -32,3 +33,4 @@ api_router.include_router(billing.router, prefix="/billing", tags=["billing"])
 api_router.include_router(tenant.router, prefix="/tenant", tags=["tenant"])
 api_router.include_router(team.router, prefix="/tenant/team", tags=["team"])
 api_router.include_router(tenant_stats.router, prefix="/tenant/dashboard", tags=["dashboard"])
+api_router.include_router(tenant_insights.router, prefix="/tenant/insights", tags=["insights"])

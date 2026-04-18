@@ -52,6 +52,12 @@ export default function DashboardPage() {
         </div>
         <nav className="flex flex-wrap gap-2 text-sm">
           <Link
+            href="/app/insights"
+            className="rounded-lg border border-sky-800 bg-sky-900/20 px-3 py-2 text-sky-200 hover:bg-sky-900/40"
+          >
+            Insights
+          </Link>
+          <Link
             href="/app/security"
             className="rounded-lg border border-slate-700 px-3 py-2 hover:bg-slate-800"
           >

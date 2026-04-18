@@ -16,6 +16,14 @@ class EmailStatus(StrEnum):
     IGNORED = "ignored"
 
 
+class EmailUrgency(StrEnum):
+    URGENT = "urgent"
+    NORMAL = "normal"
+    NEWSLETTER = "newsletter"
+    SPAM = "spam"
+    UNKNOWN = "unknown"
+
+
 class EmailThread(Base, UUIDMixin, TimestampMixin, TenantScopedMixin):
     __tablename__ = "email_threads"
 
@@ -31,6 +39,10 @@ class EmailThread(Base, UUIDMixin, TimestampMixin, TenantScopedMixin):
     body_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[EmailStatus] = mapped_column(
         String(32), default=EmailStatus.PENDING, nullable=False
+    )
+    # Classification d'urgence par Claude — décide si on drafte et si on notifie.
+    urgency: Mapped[EmailUrgency] = mapped_column(
+        String(32), default=EmailUrgency.UNKNOWN, nullable=False, index=True
     )
     suggested_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
     # ID du brouillon créé dans Outlook via createReply (si on l'a poussé).

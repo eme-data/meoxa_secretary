@@ -290,6 +290,29 @@ export interface RecentMeeting {
   has_summary: boolean;
 }
 
+export interface DailyPoint {
+  date: string;
+  drafts: number;
+  crs: number;
+  llm_cost_usd: number;
+}
+
+export interface InsightsResponse {
+  period_days: number;
+  drafts_generated: number;
+  crs_generated: number;
+  hours_saved: number;
+  time_saved_label: string;
+  llm_cost_usd: number;
+  llm_calls: number;
+  last_7_days: DailyPoint[];
+}
+
+export const insightsApi = {
+  get: (token: string) =>
+    apiFetch<InsightsResponse>("/api/v1/tenant/insights", { token }),
+};
+
 export const dashboardApi = {
   get: (token: string) =>
     apiFetch<{
@@ -301,13 +324,17 @@ export const dashboardApi = {
 
 // ---------------- Emails ---------------- //
 
+export type EmailUrgency = "urgent" | "normal" | "newsletter" | "spam" | "unknown";
+export type EmailStatus = "pending" | "drafted" | "sent" | "ignored";
+
 export interface EmailThreadListItem {
   id: string;
   subject: string;
   from_address: string;
   snippet: string;
   received_at: string | null;
-  status: "pending" | "drafted" | "sent" | "ignored";
+  status: EmailStatus;
+  urgency: EmailUrgency;
 }
 
 export interface EmailThreadDetail extends EmailThreadListItem {
@@ -317,7 +344,13 @@ export interface EmailThreadDetail extends EmailThreadListItem {
 }
 
 export const emailsApi = {
-  list: (token: string) => apiFetch<EmailThreadListItem[]>("/api/v1/emails", { token }),
+  list: (token: string, filters?: { urgency?: EmailUrgency; status?: EmailStatus }) => {
+    const q = new URLSearchParams();
+    if (filters?.urgency) q.set("urgency", filters.urgency);
+    if (filters?.status) q.set("status_filter", filters.status);
+    const query = q.toString() ? `?${q.toString()}` : "";
+    return apiFetch<EmailThreadListItem[]>(`/api/v1/emails${query}`, { token });
+  },
   get: (token: string, id: string) =>
     apiFetch<EmailThreadDetail>(`/api/v1/emails/${id}`, { token }),
   updateSuggestion: (token: string, id: string, suggested_reply: string) =>

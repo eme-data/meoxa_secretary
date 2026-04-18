@@ -3,7 +3,7 @@
 from meoxa_secretary.models.audit import AuditLog
 from meoxa_secretary.models.base import Base
 from meoxa_secretary.models.billing import SubscriptionStatus, TenantSubscription
-from meoxa_secretary.models.email import EmailThread
+from meoxa_secretary.models.email import EmailStatus, EmailThread, EmailUrgency
 from meoxa_secretary.models.integration import MicrosoftIntegration
 from meoxa_secretary.models.invitation import Invitation, InvitationStatus
 from meoxa_secretary.models.meeting import Meeting, MeetingTranscript
@@ -21,6 +21,8 @@ __all__ = [
     "Membership",
     "MicrosoftIntegration",
     "EmailThread",
+    "EmailStatus",
+    "EmailUrgency",
     "Meeting",
     "MeetingTranscript",
     "PlatformSetting",

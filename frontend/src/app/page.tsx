@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 // Pour mettre la vidéo : remplacer par l'URL iframe YouTube, Vimeo ou Loom
 // YouTube   : https://www.youtube.com/embed/VIDEO_ID
@@ -16,6 +19,7 @@ export default function HomePage() {
       <PainSection />
       <FeaturesSection />
       <HowItWorksSection />
+      <RoiCalculatorSection />
       <SecuritySection />
       <PricingSection />
       <FaqSection />
@@ -339,6 +343,175 @@ function Step({ n, title, text }: { n: number; title: string; text: string }) {
 }
 
 // ============================================================================
+// ROI Calculator
+// ============================================================================
+function RoiCalculatorSection() {
+  const [emailsPerDay, setEmailsPerDay] = useState(60);
+  const [meetingsPerWeek, setMeetingsPerWeek] = useState(5);
+  const [hourlyRate, setHourlyRate] = useState(80);
+
+  const roi = useMemo(() => {
+    // Hypothèses prudentes — volontairement sous-estimées.
+    // 2 min gagnées par email traité par Secretary (sur 3 min de rédaction manuelle)
+    const minutesSavedPerEmail = 2;
+    // 40 min gagnées par réunion (rédaction + envoi du CR)
+    const minutesSavedPerMeeting = 40;
+
+    const workDaysPerWeek = 5;
+    const workWeeksPerYear = 47;
+
+    const emailsPerWeek = emailsPerDay * workDaysPerWeek;
+    const hoursSavedEmailsYear =
+      (emailsPerWeek * minutesSavedPerEmail * workWeeksPerYear) / 60;
+    const hoursSavedMeetingsYear =
+      (meetingsPerWeek * minutesSavedPerMeeting * workWeeksPerYear) / 60;
+    const hoursSavedYear = hoursSavedEmailsYear + hoursSavedMeetingsYear;
+    const hoursSavedWeek = hoursSavedYear / workWeeksPerYear;
+    const moneySavedYear = hoursSavedYear * hourlyRate;
+    const net = moneySavedYear - 1490;
+    const roiMultiple = moneySavedYear / 1490;
+
+    return {
+      hoursSavedWeek: Math.round(hoursSavedWeek * 10) / 10,
+      hoursSavedYear: Math.round(hoursSavedYear),
+      moneySavedYear: Math.round(moneySavedYear),
+      net: Math.round(net),
+      roiMultiple: Math.round(roiMultiple * 10) / 10,
+    };
+  }, [emailsPerDay, meetingsPerWeek, hourlyRate]);
+
+  return (
+    <section className="border-y border-slate-800 bg-slate-900/30 py-20">
+      <div className="mx-auto max-w-4xl px-6">
+        <h2 className="text-center text-3xl font-bold md:text-4xl">
+          Combien Secretary te fait-il économiser ?
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-slate-400">
+          Estime ton gain annuel en 30 secondes. Les hypothèses sont volontairement
+          prudentes (2 min par email, 40 min par CR de réunion).
+        </p>
+
+        <div className="mt-12 grid gap-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-8 md:grid-cols-2">
+          <div className="space-y-6">
+            <RoiInput
+              label="Emails professionnels reçus par jour"
+              value={emailsPerDay}
+              onChange={setEmailsPerDay}
+              min={10}
+              max={300}
+              step={5}
+              suffix="emails/jour"
+            />
+            <RoiInput
+              label="Réunions Teams par semaine"
+              value={meetingsPerWeek}
+              onChange={setMeetingsPerWeek}
+              min={0}
+              max={20}
+              step={1}
+              suffix="réunions/sem."
+            />
+            <RoiInput
+              label="Ton coût horaire chargé"
+              value={hourlyRate}
+              onChange={setHourlyRate}
+              min={30}
+              max={300}
+              step={10}
+              suffix="€/h"
+            />
+          </div>
+
+          <div className="flex flex-col justify-center space-y-4 rounded-xl bg-slate-950 p-6">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-slate-500">
+                Temps gagné par semaine
+              </div>
+              <div className="mt-1 text-3xl font-bold text-sky-400">
+                {roi.hoursSavedWeek} h
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wider text-slate-500">
+                Valeur annuelle estimée
+              </div>
+              <div className="mt-1 text-4xl font-bold text-emerald-400">
+                {roi.moneySavedYear.toLocaleString("fr-FR")} €
+              </div>
+              <div className="mt-1 text-sm text-slate-500">
+                soit {roi.hoursSavedYear.toLocaleString("fr-FR")} h/an restituées
+              </div>
+            </div>
+            <div className="rounded-lg border border-emerald-900/40 bg-emerald-900/10 p-4">
+              <div className="text-sm text-slate-300">
+                Pour <strong className="text-white">1 490 € HT</strong>, tu récupères{" "}
+                <strong className="text-emerald-400">
+                  {roi.net.toLocaleString("fr-FR")} €
+                </strong>{" "}
+                nets.
+              </div>
+              <div className="mt-1 text-xs text-slate-400">
+                ROI : <strong>×{roi.roiMultiple}</strong> la première année.
+              </div>
+            </div>
+            <Link
+              href="/signup"
+              className="rounded-lg bg-brand py-3 text-center font-semibold text-white hover:bg-brand-dark"
+            >
+              Démarrer maintenant
+            </Link>
+          </div>
+        </div>
+
+        <p className="mt-6 text-center text-xs text-slate-500">
+          Estimation fondée sur des hypothèses prudentes — les clients réels rapportent
+          souvent un gain supérieur grâce à la réduction de la charge mentale
+          (moins d'oublis, meilleure réactivité).
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function RoiInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  suffix,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  suffix: string;
+}) {
+  return (
+    <label className="block">
+      <div className="flex items-baseline justify-between">
+        <span className="text-sm font-semibold text-slate-200">{label}</span>
+        <span className="font-mono text-lg text-sky-400">
+          {value} <span className="text-xs text-slate-500">{suffix}</span>
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-3 w-full accent-sky-500"
+      />
+    </label>
+  );
+}
+
+// ============================================================================
 // Sécurité
 // ============================================================================
 function SecuritySection() {
@@ -579,7 +752,7 @@ function Footer() {
           <ul className="mt-3 space-y-2 text-sm text-slate-500">
             <li><a href="#fonctionnalites" className="hover:text-white">Fonctionnalités</a></li>
             <li><a href="#tarifs" className="hover:text-white">Tarifs</a></li>
-            <li><a href="#securite" className="hover:text-white">Sécurité</a></li>
+            <li><Link href="/security" className="hover:text-white">Sécurité détaillée</Link></li>
             <li><a href="#faq" className="hover:text-white">FAQ</a></li>
             <li>
               <a
