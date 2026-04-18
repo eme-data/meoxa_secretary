@@ -206,6 +206,55 @@ TENANT_SETTINGS: tuple[SettingDef, ...] = (
         "copie l'ID depuis l'URL.",
         "string", default="",
     ),
+    # Rétention
+    SettingDef(
+        "retention.transcripts_days",
+        "Rétention des transcriptions (jours)",
+        "Nombre de jours avant suppression automatique des transcriptions + CR. "
+        "0 = jamais. Valeurs courantes : 90, 180, 365.",
+        "string",
+        default="0",
+    ),
+    # Filtrage des emails entrants
+    SettingDef(
+        "emails.skip_senders",
+        "Filtrer les expéditeurs",
+        "Liste d'adresses ou de domaines à ignorer (pas de brouillon généré), "
+        "séparés par des virgules. Ex : noreply@, *.newsletter.com, mailer@*.",
+        "text",
+        default="",
+    ),
+    SettingDef(
+        "emails.skip_subject_patterns",
+        "Filtrer les sujets",
+        "Motifs de sujets à ignorer (casse insensible), séparés par des virgules. "
+        "Ex : '[SPAM]', 'Désinscription', 'newsletter'.",
+        "text",
+        default="",
+    ),
+    SettingDef(
+        "emails.notify_urgent",
+        "Notifier les emails urgents",
+        "Envoyer une notification Slack/Teams immédiate si Secretary classe "
+        "l'email comme urgent.",
+        "bool",
+        default="true",
+    ),
+    # Notifications
+    SettingDef(
+        "notifications.slack_webhook_url",
+        "Webhook Slack",
+        "URL du webhook entrant Slack pour les notifications (CR prêt, email urgent). "
+        "Créer sur https://api.slack.com/apps.",
+        "secret",
+    ),
+    SettingDef(
+        "notifications.teams_webhook_url",
+        "Webhook Teams",
+        "URL du webhook entrant Teams. Dans un canal Teams → Connecteurs → "
+        "Incoming Webhook → Configurer.",
+        "secret",
+    ),
 )
 
 PLATFORM_BY_KEY = {s.key: s for s in PLATFORM_SETTINGS}

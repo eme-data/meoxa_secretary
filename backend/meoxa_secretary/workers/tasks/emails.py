@@ -18,9 +18,10 @@ from sqlalchemy import select, text
 
 from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.database import SessionLocal
-from meoxa_secretary.models.email import EmailStatus, EmailThread
+from meoxa_secretary.models.email import EmailStatus, EmailThread, EmailUrgency
 from meoxa_secretary.models.memory import MemorySourceType
 from meoxa_secretary.services.context import ContextService
+from meoxa_secretary.services.email_filters import should_skip
 from meoxa_secretary.services.llm import LLMService
 from meoxa_secretary.services.microsoft_graph import MicrosoftGraphService
 from meoxa_secretary.services.microsoft_integration import MicrosoftIntegrationError
@@ -57,7 +58,16 @@ def ingest_message(tenant_id: str, user_id: str, message_id: str) -> str | None:
         logger.warning("emails.ingest.ms_error", error=str(exc))
         return None
 
-    thread_id = _upsert_thread(tenant_id, message)
+    # Règles de filtrage tenant — skip avant toute LLM call.
+    from_addr = message.get("from", {}).get("emailAddress", {}).get("address", "")
+    subject = message.get("subject", "") or ""
+    skip, reason = should_skip(tenant_id, from_addr, subject)
+
+    thread_id = _upsert_thread(tenant_id, message, force_ignore=skip)
+
+    if skip:
+        logger.info("emails.skip.matched_filter", reason=reason, thread_id=thread_id)
+        return thread_id
 
     # Indexation RAG asynchrone — n'interrompt pas le flow draft.
     body_text = _html_to_text(message.get("body", {}).get("content", ""))
@@ -71,13 +81,37 @@ def ingest_message(tenant_id: str, user_id: str, message_id: str) -> str | None:
                 source_id=message.get("id", ""),
                 content=body_text,
                 meta={
-                    "subject": message.get("subject", ""),
-                    "from": message.get("from", {}).get("emailAddress", {}).get("address", ""),
+                    "subject": subject,
+                    "from": from_addr,
                     "received_at": message.get("receivedDateTime"),
                 },
             )
         except Exception as exc:
             logger.warning("emails.rag.enqueue_failed", error=str(exc))
+
+    # Classification d'urgence via Claude Haiku (économe)
+    urgency = _classify_and_store(tenant_id, thread_id, subject, body_text)
+
+    # Newsletter / spam → pas de draft
+    if urgency in ("newsletter", "spam"):
+        logger.info("emails.skip.urgency", urgency=urgency, thread_id=thread_id)
+        return thread_id
+
+    # Urgent → notif immédiate si activé
+    if urgency == "urgent":
+        notify_urgent = (
+            SettingsService().get_tenant(tenant_id, "emails.notify_urgent") or "true"
+        ).lower() == "true"
+        if notify_urgent:
+            try:
+                asyncio.run(
+                    NotificationService(tenant_id).notify(
+                        title=f"Email urgent — {subject[:80]}",
+                        text=f"De : {from_addr}\n\n{body_text[:400]}",
+                    )
+                )
+            except Exception as exc:
+                logger.debug("emails.urgent.notify_failed", error=str(exc))
 
     # Auto-draft si activé pour le tenant
     auto_draft = (
@@ -88,6 +122,30 @@ def ingest_message(tenant_id: str, user_id: str, message_id: str) -> str | None:
     return thread_id
 
 
+def _classify_and_store(
+    tenant_id: str, thread_id: str | None, subject: str, body: str
+) -> str:
+    """Classe l'email + persiste l'urgence. Retourne le tag."""
+    if not thread_id:
+        return "unknown"
+    try:
+        urgency = LLMService(tenant_id=tenant_id).classify_email_urgency(subject, body)
+    except Exception as exc:
+        logger.warning("emails.classify.failed", error=str(exc))
+        urgency = "normal"
+
+    with SessionLocal() as db:
+        db.execute(
+            text("SELECT set_config('app.tenant_id', :tid, true)"),
+            {"tid": tenant_id},
+        )
+        thread = db.scalar(select(EmailThread).where(EmailThread.id == thread_id))
+        if thread:
+            thread.urgency = EmailUrgency(urgency)  # type: ignore[arg-type]
+            db.commit()
+    return urgency
+
+
 async def _fetch_message(tenant_id: str, user_id: str, message_id: str) -> dict:
     graph = await MicrosoftGraphService.for_user(tenant_id, user_id)
     try:
@@ -96,7 +154,9 @@ async def _fetch_message(tenant_id: str, user_id: str, message_id: str) -> dict:
         await graph.aclose()
 
 
-def _upsert_thread(tenant_id: str, message: dict) -> str | None:
+def _upsert_thread(
+    tenant_id: str, message: dict, force_ignore: bool = False
+) -> str | None:
     ms_msg_id = message.get("id")
     conversation_id = message.get("conversationId", "")
     subject = (message.get("subject") or "(sans objet)")[:500]
@@ -131,7 +191,7 @@ def _upsert_thread(tenant_id: str, message: dict) -> str | None:
                 from_address=from_addr,
                 snippet=snippet,
                 body_text=body_text,
-                status=EmailStatus.PENDING,
+                status=EmailStatus.IGNORED if force_ignore else EmailStatus.PENDING,
             )
             db.add(thread)
         else:

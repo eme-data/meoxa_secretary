@@ -81,6 +81,45 @@ class LLMService:
         self._record_usage(model, LlmTaskKind.MEETING_SUMMARY, message.usage)
         return message.content[0].text  # type: ignore[union-attr]
 
+    def classify_email_urgency(self, subject: str, body_preview: str) -> str:
+        """Classe un email en `urgent` | `normal` | `newsletter` | `spam`.
+
+        Utilise Claude Haiku (rapide + économe). Fallback sur le modèle par
+        défaut si Haiku indisponible.
+        """
+        system = (
+            "Tu classifies des emails professionnels reçus en B2B. Réponds "
+            "STRICTEMENT par UN SEUL mot parmi : urgent, normal, newsletter, spam.\n"
+            "- urgent : nécessite une réponse rapide (offre expirante, problème "
+            "client, deadline courte)\n"
+            "- normal : email pro classique à traiter dans la journée\n"
+            "- newsletter : communication marketing ou lettre d'info non-personnelle\n"
+            "- spam : contenu indésirable, phishing, masse non-sollicitée"
+        )
+        prompt = f"Sujet : {subject}\n\nExtrait :\n{body_preview[:800]}"
+        model = "claude-haiku-4-5-20251001"
+        try:
+            message = self._client.messages.create(
+                model=model,
+                max_tokens=10,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+            )
+        except Exception:
+            model = self._default_model
+            message = self._client.messages.create(
+                model=model,
+                max_tokens=10,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+            )
+        self._record_usage(model, LlmTaskKind.OTHER, message.usage)
+        answer = message.content[0].text.strip().lower()  # type: ignore[union-attr]
+        for tag in ("urgent", "newsletter", "spam", "normal"):
+            if tag in answer:
+                return tag
+        return "normal"
+
     def extract_actions(self, summary_markdown: str) -> list[dict]:
         """Extrait les actions d'un CR en liste de dict (title, owner_email, due_date)."""
         system = (

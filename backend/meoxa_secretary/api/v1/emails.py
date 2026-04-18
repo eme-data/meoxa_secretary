@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from meoxa_secretary.core.deps import CurrentAuth, TenantDB, require_active_subscription
-from meoxa_secretary.models.email import EmailStatus, EmailThread
+from meoxa_secretary.models.email import EmailStatus, EmailThread, EmailUrgency
 
 # Toutes les routes emails exigent un abonnement actif.
 router = APIRouter(dependencies=[Depends(require_active_subscription)])
@@ -22,6 +22,7 @@ class EmailThreadOut(BaseModel):
     body_text: str | None = None
     received_at: datetime | None
     status: EmailStatus
+    urgency: EmailUrgency
     suggested_reply: str | None
     outlook_draft_id: str | None
 
@@ -35,6 +36,7 @@ class EmailThreadListItem(BaseModel):
     snippet: str
     received_at: datetime | None
     status: EmailStatus
+    urgency: EmailUrgency
 
     model_config = {"from_attributes": True}
 
@@ -44,10 +46,22 @@ class SuggestionUpdate(BaseModel):
 
 
 @router.get("", response_model=list[EmailThreadListItem])
-def list_threads(db: TenantDB, _: CurrentAuth) -> list[EmailThreadListItem]:
-    threads = db.scalars(
-        select(EmailThread).order_by(EmailThread.received_at.desc().nullslast()).limit(100)
-    ).all()
+def list_threads(
+    db: TenantDB,
+    _: CurrentAuth,
+    urgency: EmailUrgency | None = None,
+    status_filter: EmailStatus | None = None,
+) -> list[EmailThreadListItem]:
+    stmt = (
+        select(EmailThread)
+        .order_by(EmailThread.received_at.desc().nullslast())
+        .limit(100)
+    )
+    if urgency is not None:
+        stmt = stmt.where(EmailThread.urgency == urgency)
+    if status_filter is not None:
+        stmt = stmt.where(EmailThread.status == status_filter)
+    threads = db.scalars(stmt).all()
     return [EmailThreadListItem.model_validate(t) for t in threads]
 
 
