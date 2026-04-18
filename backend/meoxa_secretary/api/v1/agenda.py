@@ -2,15 +2,15 @@
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from meoxa_secretary.core.deps import CurrentAuth
+from meoxa_secretary.core.deps import CurrentAuth, require_active_subscription
 from meoxa_secretary.services.microsoft_graph import MicrosoftGraphService
 from meoxa_secretary.services.microsoft_integration import MicrosoftIntegrationError
 from meoxa_secretary.services.scheduling import SchedulingService
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_active_subscription)])
 
 
 class CalendarEvent(BaseModel):

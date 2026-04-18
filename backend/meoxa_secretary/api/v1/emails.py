@@ -3,14 +3,15 @@
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from meoxa_secretary.core.deps import CurrentAuth, TenantDB
+from meoxa_secretary.core.deps import CurrentAuth, TenantDB, require_active_subscription
 from meoxa_secretary.models.email import EmailStatus, EmailThread
 
-router = APIRouter()
+# Toutes les routes emails exigent un abonnement actif.
+router = APIRouter(dependencies=[Depends(require_active_subscription)])
 
 
 class EmailThreadOut(BaseModel):

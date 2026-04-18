@@ -13,24 +13,24 @@ import {
 
 type StepId =
   | "welcome"
+  | "billing"
   | "microsoft"
   | "import"
   | "teams"
   | "tone"
   | "signature"
   | "security"
-  | "billing"
   | "done";
 
 const STEPS: { id: StepId; label: string }[] = [
   { id: "welcome", label: "Bienvenue" },
+  { id: "billing", label: "Abonnement" },
   { id: "microsoft", label: "Microsoft 365" },
   { id: "import", label: "Import historique" },
   { id: "teams", label: "Configuration Teams" },
   { id: "tone", label: "Ton des emails" },
   { id: "signature", label: "Signature" },
   { id: "security", label: "Sécurité" },
-  { id: "billing", label: "Abonnement" },
   { id: "done", label: "Terminé" },
 ];
 
@@ -74,8 +74,17 @@ export default function OnboardingPage() {
   async function connectMicrosoft() {
     const token = getToken();
     if (!token) return;
-    const { authorize_url } = await integrationsApi.microsoftAuthorize(token);
-    window.location.href = authorize_url;
+    setError(null);
+    try {
+      const { authorize_url } = await integrationsApi.microsoftAuthorize(token);
+      window.location.href = authorize_url;
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? `Microsoft 365 non configuré : ${e.message}. Ton super-admin doit renseigner microsoft.client_id et microsoft.client_secret dans la configuration plateforme.`
+          : "Erreur inconnue",
+      );
+    }
   }
 
   async function saveTone() {
@@ -157,11 +166,41 @@ export default function OnboardingPage() {
               activer l'automatisation. Tu peux interrompre et reprendre à tout moment.
             </p>
             <button
-              onClick={() => setStep("microsoft")}
+              onClick={() => setStep("billing")}
               className="rounded-lg bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark"
             >
               Commencer
             </button>
+          </div>
+        )}
+
+        {step === "billing" && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Abonnement Pack Secrétariat — 1 490 € HT</h2>
+            <p className="text-slate-300">
+              L'accès à meoxa est réservé aux abonnés actifs. Active ton abonnement pour
+              débloquer la connexion Microsoft et l'automatisation.
+            </p>
+            {status?.steps.billing_active ? (
+              <div className="flex items-center gap-3">
+                <span className="rounded bg-emerald-900/40 px-2 py-1 text-sm text-emerald-400">
+                  Abonnement actif
+                </span>
+                <button
+                  onClick={() => setStep("microsoft")}
+                  className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:bg-brand-dark"
+                >
+                  Continuer
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/app/billing"
+                className="inline-block rounded-lg bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark"
+              >
+                Souscrire maintenant
+              </Link>
+            )}
           </div>
         )}
 

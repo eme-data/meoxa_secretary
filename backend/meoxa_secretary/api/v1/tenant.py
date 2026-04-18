@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from meoxa_secretary.core.deps import CurrentAuth, TenantAdmin, TenantDB
+from meoxa_secretary.core.deps import CurrentAuth, PaidAuth, TenantAdmin, TenantDB
 from meoxa_secretary.models.billing import SubscriptionStatus, TenantSubscription
 from meoxa_secretary.models.integration import MicrosoftIntegration
 from meoxa_secretary.models.setting import TenantSetting
@@ -268,7 +268,7 @@ def confirm_teams_recording(
 
 
 @router.post("/onboarding/import-history", status_code=status.HTTP_202_ACCEPTED)
-def start_history_import(auth: CurrentAuth, request: Request) -> dict[str, str]:
+def start_history_import(auth: PaidAuth, request: Request) -> dict[str, str]:
     """Lance l'indexation RAG des 30 derniers jours d'emails. Async."""
     from meoxa_secretary.workers.tasks.onboarding import import_history
 

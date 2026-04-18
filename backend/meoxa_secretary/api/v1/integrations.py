@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
 
 from meoxa_secretary.config import get_settings
-from meoxa_secretary.core.deps import CurrentAuth
+from meoxa_secretary.core.deps import CurrentAuth, PaidAuth
 from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.services.audit import AuditService
 from meoxa_secretary.services.microsoft_graph import MicrosoftOAuthService
@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/microsoft/authorize")
-def microsoft_authorize(auth: CurrentAuth) -> dict[str, str]:
+def microsoft_authorize(auth: PaidAuth) -> dict[str, str]:
     """Retourne l'URL de consentement Microsoft — le frontend y redirige l'utilisateur."""
     try:
         url = MicrosoftOAuthService().build_authorize_url(

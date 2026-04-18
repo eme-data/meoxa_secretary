@@ -113,3 +113,35 @@ def require_tenant_admin(auth: CurrentAuth) -> AuthContext:
 
 
 TenantAdmin = Annotated[AuthContext, Depends(require_tenant_admin)]
+
+
+def require_active_subscription(auth: CurrentAuth) -> AuthContext:
+    """Bloque la route si le tenant n'a pas d'abonnement Stripe actif.
+
+    Super-admin bypass : la plateforme (MDO) peut toujours accéder aux routes
+    pour maintenance / démo.
+    """
+    if auth.user.is_superadmin:
+        return auth
+
+    from meoxa_secretary.models.billing import SubscriptionStatus, TenantSubscription
+
+    with SessionLocal() as session:
+        session.execute(
+            text("SELECT set_config('app.tenant_id', :tid, true)"),
+            {"tid": auth.tenant_id},
+        )
+        sub = session.scalar(
+            select(TenantSubscription).where(TenantSubscription.tenant_id == auth.tenant_id)
+        )
+
+    ok_statuses = {SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING}
+    if not sub or sub.status not in ok_statuses:
+        raise HTTPException(
+            status.HTTP_402_PAYMENT_REQUIRED,
+            "Abonnement requis — souscris au Pack Secrétariat pour accéder à cette fonctionnalité.",
+        )
+    return auth
+
+
+PaidAuth = Annotated[AuthContext, Depends(require_active_subscription)]
