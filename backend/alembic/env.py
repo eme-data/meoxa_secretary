@@ -3,7 +3,7 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 
 from meoxa_secretary.config import get_settings
 from meoxa_secretary.models import Base  # noqa: F401 — peuple Base.metadata
@@ -35,6 +35,20 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
+        # Par défaut Alembic crée `alembic_version.version_num` en VARCHAR(32),
+        # ce qui coupe les revisions à noms descriptifs > 32 car. On élargit
+        # préemptivement — no-op si la table n'existe pas encore (1re install).
+        try:
+            connection.execute(
+                text(
+                    "ALTER TABLE alembic_version "
+                    "ALTER COLUMN version_num TYPE varchar(128)"
+                )
+            )
+            connection.commit()
+        except Exception:
+            pass
+
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
