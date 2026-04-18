@@ -158,7 +158,7 @@ function PainSection() {
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           <PainCard
             title="Emails qui s'accumulent"
-            text="Entre 50 et 150 emails par jour. Chacun demande 3 minutes de réflexion, même pour écrire "OK, je valide"."
+            text={`Entre 50 et 150 emails par jour. Chacun demande 3 minutes de réflexion, même pour écrire "OK, je valide".`}
           />
           <PainCard
             title="Réunions sans trace"
