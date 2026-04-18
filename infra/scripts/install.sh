@@ -148,9 +148,9 @@ phase_firewall() {
     ufw --force reset >/dev/null
     ufw default deny incoming
     ufw default allow outgoing
-    ufw allow 22/tcp    comment "SSH"
-    ufw allow 80/tcp    comment "HTTP Let's Encrypt + redirect"
-    ufw allow 443/tcp   comment "HTTPS"
+    ufw allow 22/tcp    comment SSH
+    ufw allow 80/tcp    comment HTTP
+    ufw allow 443/tcp   comment HTTPS
     ufw --force enable >/dev/null
     ok "UFW actif : 22, 80, 443"
 }
