@@ -63,10 +63,16 @@ def ingest_message(tenant_id: str, user_id: str, message_id: str) -> str | None:
     subject = message.get("subject", "") or ""
     skip, reason = should_skip(tenant_id, from_addr, subject)
 
-    thread_id = _upsert_thread(tenant_id, message, force_ignore=skip)
+    thread_id, is_new_message = _upsert_thread(tenant_id, message, force_ignore=skip)
 
     if skip:
         logger.info("emails.skip.matched_filter", reason=reason, thread_id=thread_id)
+        return thread_id
+
+    if not is_new_message:
+        # Notification en doublon (Graph pousse created + updated pour le même
+        # mail) — le thread existe déjà, pas de retraitement nécessaire.
+        logger.info("emails.ingest.duplicate_notification", thread_id=thread_id)
         return thread_id
 
     # Indexation RAG asynchrone — n'interrompt pas le flow draft.
@@ -156,7 +162,13 @@ async def _fetch_message(tenant_id: str, user_id: str, message_id: str) -> dict:
 
 def _upsert_thread(
     tenant_id: str, message: dict, force_ignore: bool = False
-) -> str | None:
+) -> tuple[str | None, bool]:
+    """Upsert un EmailThread. Renvoie (thread_id, is_new_message).
+
+    `is_new_message=False` quand la notification concerne un ms_message_id
+    déjà ingéré (Graph pousse plusieurs notifs created/updated pour le même
+    mail) — les callers peuvent alors éviter de ré-enqueue le draft.
+    """
     ms_msg_id = message.get("id")
     conversation_id = message.get("conversationId", "")
     subject = (message.get("subject") or "(sans objet)")[:500]
@@ -181,6 +193,7 @@ def _upsert_thread(
                 EmailThread.ms_conversation_id == conversation_id
             )
         )
+        is_new_message = True
         if thread is None:
             thread = EmailThread(
                 tenant_id=tenant_id,  # type: ignore[arg-type]
@@ -195,21 +208,24 @@ def _upsert_thread(
             )
             db.add(thread)
         else:
+            # Même ms_message_id → c'est une notif en double (Graph répète
+            # created + updated), on ne ré-enqueue pas le draft.
+            is_new_message = ms_msg_id is not None and ms_msg_id != thread.ms_message_id
             thread.ms_message_id = ms_msg_id or thread.ms_message_id
             thread.received_at = received_at or thread.received_at
             thread.subject = subject
             thread.from_address = from_addr
             thread.snippet = snippet
             thread.body_text = body_text
-            # Nouveau message → on remet en pending pour re-drafter
-            if thread.status in (EmailStatus.DRAFTED, EmailStatus.IGNORED):
+            # Nouveau message dans le fil → on remet en pending pour re-drafter
+            if is_new_message and thread.status in (EmailStatus.DRAFTED, EmailStatus.IGNORED):
                 thread.status = EmailStatus.PENDING
                 thread.suggested_reply = None
                 thread.outlook_draft_id = None
         db.flush()
         thread_id = str(thread.id)
         db.commit()
-    return thread_id
+    return thread_id, is_new_message
 
 
 # ---------------- Draft reply ----------------
