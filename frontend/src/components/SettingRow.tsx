@@ -81,6 +81,9 @@ export function SettingRow({ setting, onSave }: Props) {
             value={value || (setting.is_secret ? "" : setting.value)}
             placeholder={setting.is_secret ? "Saisir pour modifier" : ""}
             onChange={(e) => setValue(e.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm"
           />
         ) : (
@@ -89,6 +92,10 @@ export function SettingRow({ setting, onSave }: Props) {
             value={value || (setting.is_secret ? "" : setting.value)}
             placeholder={setting.is_secret ? "Saisir pour modifier" : ""}
             onChange={(e) => setValue(e.target.value)}
+            autoComplete={setting.is_secret ? "new-password" : "off"}
+            autoCorrect="off"
+            spellCheck={false}
+            data-form-type="other"
             className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm"
           />
         )}
