@@ -17,7 +17,7 @@ jobs:
       url: https://secretary.meoxa.app
     steps:
       - name: SSH → git pull + build + migrate + restart
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
