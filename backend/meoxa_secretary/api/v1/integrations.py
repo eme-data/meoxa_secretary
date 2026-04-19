@@ -50,11 +50,15 @@ def microsoft_status(auth: CurrentAuth) -> dict[str, object]:
         if not integration:
             return {"connected": False, "healthy": False, "last_error": None}
 
-        healthy = integration.last_error is None
+        # Un access_token expiré n'est pas un problème tant qu'on a un refresh_token :
+        # le prochain appel Graph fera un refresh silencieux. On ne considère
+        # l'intégration "unhealthy" que quand un refresh a réellement échoué
+        # (last_error set) ou quand le refresh_token manque.
+        healthy = integration.last_error is None and bool(integration.refresh_token)
         expired = integration.expires_at < datetime.now(timezone.utc)
         return {
             "connected": True,
-            "healthy": healthy and not expired,
+            "healthy": healthy,
             "expired": expired,
             "ms_upn": integration.ms_upn,
             "last_error": integration.last_error,
