@@ -33,7 +33,7 @@ def microsoft_authorize(auth: PaidAuth) -> dict[str, str]:
 @router.get("/microsoft/status")
 def microsoft_status(auth: CurrentAuth) -> dict[str, object]:
     """Renvoie l'état de l'intégration MS de l'utilisateur courant."""
-    from datetime import datetime, timezone
+    from datetime import UTC, datetime
 
     from sqlalchemy import select, text
 
@@ -55,7 +55,7 @@ def microsoft_status(auth: CurrentAuth) -> dict[str, object]:
         # l'intégration "unhealthy" que quand un refresh a réellement échoué
         # (last_error set) ou quand le refresh_token manque.
         healthy = integration.last_error is None and bool(integration.refresh_token)
-        expired = integration.expires_at < datetime.now(timezone.utc)
+        expired = integration.expires_at < datetime.now(UTC)
         return {
             "connected": True,
             "healthy": healthy,

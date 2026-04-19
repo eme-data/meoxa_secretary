@@ -1,6 +1,6 @@
 """Routes tenant : branding, export RGPD, droit à l'oubli, onboarding."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile, status
@@ -290,7 +290,7 @@ def complete_onboarding(
     tenant = db.scalar(select(Tenant).where(Tenant.id == auth.tenant_id))
     if not tenant:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tenant introuvable")
-    tenant.onboarded_at = datetime.now(timezone.utc)
+    tenant.onboarded_at = datetime.now(UTC)
     db.commit()
     AuditService.log(
         action="onboarding.completed",

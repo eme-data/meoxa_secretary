@@ -45,6 +45,9 @@ pnpm-debug.log*
 *.swo
 .DS_Store
 
+# Claude Code local permissions
+.claude/settings.local.json
+
 # Docker
 docker-compose.override.yml
 

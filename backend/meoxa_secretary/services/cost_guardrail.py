@@ -11,7 +11,7 @@ call LLM. Invalidation automatique par TTL.
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -46,7 +46,7 @@ def is_over_monthly_budget(tenant_id: str) -> bool:
         _cache[tenant_id] = (False, now + _CACHE_TTL)
         return False
 
-    start_of_month = datetime.now(timezone.utc).replace(
+    start_of_month = datetime.now(UTC).replace(
         day=1, hour=0, minute=0, second=0, microsecond=0
     )
 
@@ -75,7 +75,7 @@ def _notify_once_per_month(tenant_id: str, total_usd: float, limit_usd: float) -
     from meoxa_secretary.models.setting import TenantSetting
     from meoxa_secretary.services.notifications import NotificationService
 
-    month_key = datetime.now(timezone.utc).strftime("%Y%m")
+    month_key = datetime.now(UTC).strftime("%Y%m")
     key = "llm.cost_alert_last_month"
 
     with SessionLocal() as db:

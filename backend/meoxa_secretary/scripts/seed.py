@@ -9,7 +9,7 @@ from meoxa_secretary.models.tenant import Tenant
 from meoxa_secretary.models.user import Membership, Role, User
 
 DEMO_EMAIL = "demo@meoxa.local"
-DEMO_PASSWORD = "ChangeMe-2026!"  # noqa: S105
+DEMO_PASSWORD = "ChangeMe-2026!"
 DEMO_ORG = "Meoxa Demo"
 
 

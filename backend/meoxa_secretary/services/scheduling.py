@@ -12,7 +12,7 @@ Algorithme :
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, time, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from meoxa_secretary.services.microsoft_graph import MicrosoftGraphService
@@ -58,8 +58,8 @@ class SchedulingService:
         graph = await MicrosoftGraphService.for_user(tenant_id, user_id)
         try:
             events_raw = await graph.list_upcoming_events(
-                start=from_date.astimezone(timezone.utc).isoformat(),
-                end=to_date.astimezone(timezone.utc).isoformat(),
+                start=from_date.astimezone(UTC).isoformat(),
+                end=to_date.astimezone(UTC).isoformat(),
                 top=200,
             )
         finally:
@@ -94,9 +94,9 @@ def _parse_event_window(event: dict) -> tuple[datetime, datetime] | None:
     except (KeyError, ValueError):
         return None
     if start.tzinfo is None:
-        start = start.replace(tzinfo=timezone.utc)
+        start = start.replace(tzinfo=UTC)
     if end.tzinfo is None:
-        end = end.replace(tzinfo=timezone.utc)
+        end = end.replace(tzinfo=UTC)
     return (start, end)
 
 
@@ -129,10 +129,10 @@ def _generate_candidates(
             hour=working.end_hour, minute=0, second=0, microsecond=0
         )
         if local < day_start:
-            cursor = day_start.astimezone(timezone.utc)
+            cursor = day_start.astimezone(UTC)
             continue
         if local + duration > day_end:
-            cursor = (day_start + timedelta(days=1)).astimezone(timezone.utc)
+            cursor = (day_start + timedelta(days=1)).astimezone(UTC)
             continue
 
         # Pause déjeuner
@@ -144,7 +144,7 @@ def _generate_candidates(
         )
         slot = Slot(start=cursor, end=cursor + duration)
         if _overlaps((slot.start, slot.end), (lunch_start, lunch_end)):
-            cursor = lunch_end.astimezone(timezone.utc)
+            cursor = lunch_end.astimezone(UTC)
             continue
 
         slots.append(slot)

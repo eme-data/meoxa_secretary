@@ -40,4 +40,4 @@ def process_recording(self, tenant_id: str, user_id: str, drive_item_id: str) ->
         )
     except Exception as exc:
         logger.exception("meetings.process.failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

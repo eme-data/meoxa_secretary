@@ -14,7 +14,7 @@ créé côté Microsoft Planner et avoir les bons droits sur le groupe M365 asso
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select, text
@@ -82,7 +82,7 @@ class PlannerService:
         try:
             # Accepte YYYY-MM-DD ou ISO complet.
             if isinstance(value, str) and len(value) == 10:
-                dt = datetime.fromisoformat(value).replace(tzinfo=timezone.utc)
+                dt = datetime.fromisoformat(value).replace(tzinfo=UTC)
             else:
                 dt = datetime.fromisoformat(str(value))
             return dt.isoformat().replace("+00:00", "Z")

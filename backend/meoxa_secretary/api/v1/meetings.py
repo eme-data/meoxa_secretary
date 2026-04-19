@@ -58,6 +58,7 @@ def get_meeting_detail(
     meeting_id: UUID, db: TenantDB, _: CurrentAuth
 ) -> MeetingDetail:
     import json
+
     from sqlalchemy import select as _select
 
     from meoxa_secretary.models.meeting import MeetingTranscript

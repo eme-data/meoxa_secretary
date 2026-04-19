@@ -8,10 +8,9 @@
 
 from __future__ import annotations
 
-import io
 import json
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -44,7 +43,7 @@ class TenantDataService:
     def export(self, tenant_id: str | UUID) -> Path:
         """Crée un ZIP d'export et retourne son chemin local."""
         EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         archive_path = EXPORT_DIR / f"tenant-{tenant_id}-{timestamp}.zip"
 
         with SessionLocal() as session:
@@ -57,7 +56,7 @@ class TenantDataService:
                 json.dumps(
                     {
                         "tenant_id": str(tenant_id),
-                        "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "generated_at": datetime.now(UTC).isoformat(),
                         "format_version": 1,
                         "files": sorted(payload.keys()),
                     },
@@ -122,7 +121,7 @@ class TenantDataService:
 
     def schedule_deletion(self, tenant_id: str | UUID) -> datetime:
         """Marque la suppression ; effacement réel après `DELETION_GRACE_PERIOD`."""
-        scheduled_for = datetime.now(timezone.utc) + DELETION_GRACE_PERIOD
+        scheduled_for = datetime.now(UTC) + DELETION_GRACE_PERIOD
         with SessionLocal() as session:
             tenant = session.get(Tenant, tenant_id)
             if not tenant:
@@ -148,7 +147,7 @@ class TenantDataService:
     def purge_due(self) -> int:
         """Supprime effectivement les tenants dont `deletion_scheduled_at` est passé."""
         purged = 0
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         with SessionLocal() as session:
             due = session.scalars(
                 select(Tenant).where(

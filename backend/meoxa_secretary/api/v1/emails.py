@@ -156,13 +156,13 @@ def mark_thread_sent(
 ) -> EmailThreadOut:
     """Capture la version finale envoyée par l'user (pour le feedback loop)."""
     from datetime import datetime as _dt
-    from datetime import timezone as _tz
+    from datetime import UTC as _UTC
 
     thread = db.get(EmailThread, thread_id)
     if not thread:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Thread introuvable")
     thread.sent_reply = body.suggested_reply
-    thread.sent_at = _dt.now(_tz.utc)
+    thread.sent_at = _dt.now(_UTC)
     thread.status = EmailStatus.SENT
     db.commit()
     db.refresh(thread)

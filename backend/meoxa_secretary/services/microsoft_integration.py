@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -52,7 +52,7 @@ class MicrosoftIntegrationService:
 
         ms_upn = result.get("id_token_claims", {}).get("preferred_username", "")
         ms_user_id = result.get("id_token_claims", {}).get("oid", "")
-        expires_at = datetime.now(timezone.utc) + timedelta(
+        expires_at = datetime.now(UTC) + timedelta(
             seconds=int(result.get("expires_in", 3600))
         )
         scopes = result.get("scope", " ".join(self._scopes()))
@@ -97,7 +97,7 @@ class MicrosoftIntegrationService:
     def get_valid_access_token(self, tenant_id: str | UUID, user_id: str | UUID) -> str:
         """Retourne un access token valide, en rafraîchissant si nécessaire."""
         integration = self._load(tenant_id, user_id)
-        if integration.expires_at - datetime.now(timezone.utc) > REFRESH_THRESHOLD:
+        if integration.expires_at - datetime.now(UTC) > REFRESH_THRESHOLD:
             return decrypt(integration.access_token)
 
         return self._refresh(integration)
@@ -135,7 +135,7 @@ class MicrosoftIntegrationService:
             self._mark_error(integration, msg[:500])
             raise MicrosoftIntegrationError(msg)
 
-        expires_at = datetime.now(timezone.utc) + timedelta(
+        expires_at = datetime.now(UTC) + timedelta(
             seconds=int(result.get("expires_in", 3600))
         )
         new_access = result["access_token"]
@@ -158,7 +158,7 @@ class MicrosoftIntegrationService:
                 row = session.get(MicrosoftIntegration, integration.id)
                 if row:
                     row.last_error = message
-                    row.last_error_at = datetime.now(timezone.utc)
+                    row.last_error_at = datetime.now(UTC)
         except Exception as exc:
             logger.warning("ms.mark_error_failed", error=str(exc))
 

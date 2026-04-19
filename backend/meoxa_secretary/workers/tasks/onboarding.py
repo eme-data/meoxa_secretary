@@ -8,7 +8,7 @@ soient stylisés comme le user.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.database import SessionLocal
@@ -39,7 +39,7 @@ def import_history(tenant_id: str, user_id: str, lookback_days: int | None = Non
 
 
 async def _import(tenant_id: str, user_id: str, days: int) -> int:
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    since = datetime.now(UTC) - timedelta(days=days)
     since_iso = since.isoformat().replace("+00:00", "Z")
 
     graph = await MicrosoftGraphService.for_user(tenant_id, user_id)

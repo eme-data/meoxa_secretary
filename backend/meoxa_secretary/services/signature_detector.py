@@ -29,7 +29,7 @@ FREQUENCY_THRESHOLD = 0.5  # signature doit apparaître dans >= 50% des mails
 
 _HTML_TAG = re.compile(r"<[^>]+>")
 _REPLY_MARKERS = re.compile(
-    r"^\s*(from|de|sent|envoy[ée]|subject|objet|to|à)\s*[:：]",
+    r"^\s*(from|de|sent|envoy[ée]|subject|objet|to|à)\s*[:：]",  # noqa: RUF001 — inclut aussi le FULLWIDTH COLON (emails asiatiques)
     re.IGNORECASE | re.MULTILINE,
 )
 

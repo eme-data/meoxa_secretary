@@ -10,7 +10,7 @@ contrats à fort enjeu.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from meoxa_secretary.models.tenant import Tenant
 
@@ -26,7 +26,7 @@ def render_dpa_html(
     effective_date: datetime | None = None,
 ) -> str:
     """Rend le DPA en HTML avec CSS d'impression intégré."""
-    effective_date = effective_date or datetime.now(timezone.utc)
+    effective_date = effective_date or datetime.now(UTC)
     date_str = effective_date.strftime("%d %B %Y")
 
     # Liste des sous-traitants ultérieurs — à ajuster si la stack évolue.

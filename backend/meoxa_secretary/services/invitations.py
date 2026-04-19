@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from slugify import slugify  # noqa: F401  (exporté pour cohérence)
@@ -41,7 +41,7 @@ class InvitationService:
             raise InvitationError("Rôle invalide")
 
         token = secrets.token_urlsafe(32)
-        expires = datetime.now(timezone.utc) + INVITATION_TTL
+        expires = datetime.now(UTC) + INVITATION_TTL
 
         with SessionLocal() as db:
             db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)})
@@ -80,7 +80,7 @@ class InvitationService:
 
             if invitation.status != InvitationStatus.PENDING:
                 raise InvitationError("Invitation déjà utilisée ou révoquée")
-            if invitation.expires_at < datetime.now(timezone.utc):
+            if invitation.expires_at < datetime.now(UTC):
                 invitation.status = InvitationStatus.EXPIRED
                 db.commit()
                 raise InvitationError("Invitation expirée")
@@ -119,7 +119,7 @@ class InvitationService:
                 )
 
             invitation.status = InvitationStatus.ACCEPTED
-            invitation.accepted_at = datetime.now(timezone.utc)
+            invitation.accepted_at = datetime.now(UTC)
             db.commit()
             db.refresh(user)
             db.expunge(user)

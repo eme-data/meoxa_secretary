@@ -1,6 +1,6 @@
 """Routes — agenda (lecture calendrier, smart scheduling, création Teams meeting)."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -25,7 +25,7 @@ class CalendarEvent(BaseModel):
 @router.get("/events", response_model=list[CalendarEvent])
 async def list_events(auth: CurrentAuth) -> list[CalendarEvent]:
     """Liste les prochains événements du calendrier Outlook de l'utilisateur."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     try:
         graph = await MicrosoftGraphService.for_user(
             tenant_id=str(auth.tenant_id), user_id=str(auth.user.id)
@@ -72,7 +72,7 @@ class SlotOut(BaseModel):
 
 @router.post("/suggest-slots", response_model=list[SlotOut])
 async def suggest_slots(body: SuggestSlotsRequest, auth: CurrentAuth) -> list[SlotOut]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     start = body.from_date or (now + timedelta(hours=1))
     end = body.to_date or (start + timedelta(days=7))
     if end <= start:
@@ -118,8 +118,8 @@ async def create_online_meeting(
     try:
         data = await graph.create_online_meeting(
             subject=body.subject,
-            start_iso=body.start.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
-            end_iso=body.end.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+            start_iso=body.start.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+            end_iso=body.end.astimezone(UTC).isoformat().replace("+00:00", "Z"),
         )
     finally:
         await graph.aclose()

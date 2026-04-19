@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import select, text
 
@@ -20,7 +20,6 @@ from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.database import SessionLocal
 from meoxa_secretary.models.email import EmailStatus, EmailThread, EmailUrgency
 from meoxa_secretary.models.memory import MemorySourceType
-from meoxa_secretary.services.context import ContextService
 from meoxa_secretary.services.email_filters import should_skip
 from meoxa_secretary.services.llm import LLMService
 from meoxa_secretary.services.microsoft_graph import MicrosoftGraphService
@@ -285,7 +284,7 @@ def draft_reply(
         )
     except Exception as exc:
         logger.exception("emails.draft.llm_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
     if not suggestion.strip():
         return False

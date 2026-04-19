@@ -15,7 +15,6 @@ import re
 from anthropic import Anthropic
 
 from meoxa_secretary.core.logging import get_logger
-from meoxa_secretary.models.memory import MemorySourceType
 from meoxa_secretary.models.usage import LlmTaskKind
 from meoxa_secretary.services.context import ContextService
 from meoxa_secretary.services.settings import SettingsService

@@ -1,6 +1,6 @@
 """Endpoint stats pour le dashboard tenant (`/app`)."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 
 from meoxa_secretary.core.deps import CurrentAuth, TenantDB
 from meoxa_secretary.models.email import EmailStatus, EmailThread
-from meoxa_secretary.models.meeting import Meeting, MeetingStatus, MeetingTranscript
+from meoxa_secretary.models.meeting import Meeting, MeetingTranscript
 from meoxa_secretary.models.usage import LlmUsageEvent
 
 router = APIRouter()
@@ -45,7 +45,7 @@ class DashboardPayload(BaseModel):
 
 @router.get("", response_model=DashboardPayload)
 def dashboard(auth: CurrentAuth, db: TenantDB) -> DashboardPayload:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     emails_to_review = (

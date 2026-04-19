@@ -1,6 +1,6 @@
 """Hash de mots de passe + signature JWT."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 import jwt
@@ -31,7 +31,7 @@ def create_token(
     token_type: TokenType = "access",
     extra_claims: dict[str, Any] | None = None,
 ) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if token_type == "access":
         expire = now + timedelta(minutes=_settings.jwt_access_ttl_minutes)
     elif token_type == "refresh":

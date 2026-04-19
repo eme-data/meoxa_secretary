@@ -8,11 +8,11 @@ le coût calculé au moment du call).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Integer, func, select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from meoxa_secretary.core.logging import get_logger
@@ -63,7 +63,7 @@ class UsageService:
             + cache_read_tokens * p.cache_read / 1_000_000
             + cache_write_tokens * p.cache_write / 1_000_000
         )
-        return int(round(total_usd * 1_000_000))
+        return round(total_usd * 1_000_000)
 
     @staticmethod
     def record(
@@ -124,7 +124,7 @@ class UsageService:
         N.B. appelé par le super-admin sans RLS (session globale) — on lit cross-tenant.
         """
         if since is None:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             since = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         rows = db.execute(

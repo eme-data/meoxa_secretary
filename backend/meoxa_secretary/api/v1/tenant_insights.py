@@ -1,6 +1,6 @@
 """Endpoint Insights — métriques de valeur pour le tenant (ROI réel)."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -38,7 +38,7 @@ class InsightsResponse(BaseModel):
 
 @router.get("", response_model=InsightsResponse)
 def get_insights(auth: CurrentAuth, db: TenantDB) -> InsightsResponse:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     week_ago = now - timedelta(days=7)
 

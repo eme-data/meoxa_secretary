@@ -11,10 +11,10 @@ tenant décider s'il veut être envoyé maintenant en comparant sa timezone + so
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
-from zoneinfo import ZoneInfo
 
 from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.database import SessionLocal
@@ -32,7 +32,7 @@ def send_all_digests() -> int:
 
     Exécuté une fois par heure par Celery beat.
     """
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
 
     with SessionLocal() as db:
         tenants = db.scalars(

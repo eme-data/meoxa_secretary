@@ -11,7 +11,7 @@ La rétention s'applique via un beat Celery quotidien (04:30 UTC).
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select, text
@@ -37,7 +37,7 @@ class RetentionService:
         if days <= 0:
             return 0
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         purged = 0
 
         with SessionLocal() as db:

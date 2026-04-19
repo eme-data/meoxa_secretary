@@ -1,6 +1,7 @@
 """Dashboard super-admin — liste des tenants avec métriques clés."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -14,6 +15,8 @@ from meoxa_secretary.models.billing import SubscriptionStatus, TenantSubscriptio
 from meoxa_secretary.models.tenant import Tenant
 from meoxa_secretary.models.user import Membership
 from meoxa_secretary.services.usage import UsageService
+
+DbDep = Annotated[Session, Depends(get_db)]
 
 router = APIRouter()
 
@@ -40,7 +43,7 @@ class DashboardResponse(BaseModel):
 
 
 @router.get("/tenants", response_model=DashboardResponse)
-def list_tenants(_: SuperAdmin, db: Session = Depends(get_db)) -> DashboardResponse:
+def list_tenants(_: SuperAdmin, db: DbDep) -> DashboardResponse:
     tenants = db.scalars(select(Tenant).order_by(Tenant.created_at.desc())).all()
 
     # Usage LLM mois courant (agrégat cross-tenant).
@@ -100,7 +103,7 @@ def list_tenants(_: SuperAdmin, db: Session = Depends(get_db)) -> DashboardRespo
         )
 
     return DashboardResponse(
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         totals={
             "tenants": float(len(tenants)),
             "active_subscriptions": float(total_active_subs),

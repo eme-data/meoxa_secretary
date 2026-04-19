@@ -289,7 +289,7 @@ class InvitationPreview(BaseModel):
 @router.get("/invitations/{token}", response_model=InvitationPreview)
 def preview_invitation(token: str, db: DBDep) -> InvitationPreview:
     from datetime import datetime as _dt
-    from datetime import timezone as _tz
+    from datetime import UTC as _UTC
 
     from meoxa_secretary.models.invitation import Invitation, InvitationStatus
     from meoxa_secretary.models.tenant import Tenant
@@ -297,7 +297,7 @@ def preview_invitation(token: str, db: DBDep) -> InvitationPreview:
     inv = db.scalar(select(Invitation).where(Invitation.token == token))
     if not inv or inv.status != InvitationStatus.PENDING:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Invitation invalide")
-    if inv.expires_at < _dt.now(_tz.utc):
+    if inv.expires_at < _dt.now(_UTC):
         raise HTTPException(status.HTTP_410_GONE, "Invitation expirée")
     tenant = db.scalar(select(Tenant).where(Tenant.id == inv.tenant_id))
     return InvitationPreview(

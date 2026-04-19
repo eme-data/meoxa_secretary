@@ -10,13 +10,12 @@ réunion, aucune action) on skip — pas de mail vide.
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, text
-from zoneinfo import ZoneInfo
 
 from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.database import SessionLocal
@@ -83,8 +82,8 @@ def build_digest(tenant_id: str) -> DigestContent:
         meetings = db.scalars(
             select(Meeting)
             .where(
-                Meeting.starts_at >= start_of_day.astimezone(timezone.utc),
-                Meeting.starts_at < end_of_day.astimezone(timezone.utc),
+                Meeting.starts_at >= start_of_day.astimezone(UTC),
+                Meeting.starts_at < end_of_day.astimezone(UTC),
             )
             .order_by(Meeting.starts_at)
         ).all()

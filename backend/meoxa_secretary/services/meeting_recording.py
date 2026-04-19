@@ -21,6 +21,7 @@ from typing import Any
 from uuid import UUID
 
 import httpx
+from sqlalchemy import select, text
 
 from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.database import SessionLocal
@@ -28,7 +29,6 @@ from meoxa_secretary.models.meeting import Meeting, MeetingStatus, MeetingTransc
 from meoxa_secretary.models.memory import MemorySourceType
 from meoxa_secretary.models.subscription import GraphResourceType, GraphSubscription
 from meoxa_secretary.services.microsoft_integration import MicrosoftIntegrationService
-from sqlalchemy import select, text
 
 logger = get_logger(__name__)
 
@@ -154,6 +154,7 @@ class MeetingRecordingService:
         self, client: httpx.AsyncClient, drive_item_id: str
     ) -> str:
         """Télécharge le MP4/audio et le transcrit via faster-whisper."""
+        import contextlib
         import os
         import tempfile
 
@@ -185,10 +186,8 @@ class MeetingRecordingService:
 
             return WhisperService().transcribe(tmp_path)
         finally:
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 os.unlink(tmp_path)
-            except FileNotFoundError:
-                pass
 
     # ---------------- Persistance + envoi du CR ----------------
 
@@ -441,6 +440,6 @@ def _escape(text_in: str) -> str:
 
 
 def _fallback_now():
-    from datetime import datetime, timezone
+    from datetime import UTC, datetime
 
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

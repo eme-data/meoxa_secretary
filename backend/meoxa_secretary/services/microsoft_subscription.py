@@ -13,7 +13,7 @@ Flux :
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import httpx
@@ -86,7 +86,7 @@ class MicrosoftSubscriptionService:
         client: httpx.AsyncClient,
     ) -> str:
         client_state = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + SUBSCRIPTION_TTL
+        expires_at = datetime.now(UTC) + SUBSCRIPTION_TTL
 
         payload = {
             "changeType": "created,updated",
@@ -152,7 +152,7 @@ class MicrosoftSubscriptionService:
 
     async def renew_expiring(self) -> int:
         """Appelé par Celery beat — renouvelle toutes les subs expirant dans < 24h."""
-        cutoff = datetime.now(timezone.utc) + RENEWAL_THRESHOLD
+        cutoff = datetime.now(UTC) + RENEWAL_THRESHOLD
         renewed = 0
 
         with SessionLocal() as session:
@@ -180,7 +180,7 @@ class MicrosoftSubscriptionService:
         self, row_id: UUID, tenant_id: str, user_id: str, graph_sub_id: str
     ) -> None:
         token = self._integration.get_valid_access_token(tenant_id, user_id)
-        new_expires = datetime.now(timezone.utc) + SUBSCRIPTION_TTL
+        new_expires = datetime.now(UTC) + SUBSCRIPTION_TTL
 
         async with httpx.AsyncClient(
             base_url=GRAPH_BASE,

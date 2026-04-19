@@ -9,7 +9,7 @@ Un event par appel `messages.create`. Permet d'agréger :
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Integer, Numeric, String
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 

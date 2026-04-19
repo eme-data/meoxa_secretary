@@ -8,7 +8,7 @@ Credentials lus depuis platform_settings :
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -19,7 +19,6 @@ from meoxa_secretary.config import get_settings
 from meoxa_secretary.core.logging import get_logger
 from meoxa_secretary.database import SessionLocal
 from meoxa_secretary.models.billing import SubscriptionStatus, TenantSubscription
-from meoxa_secretary.models.tenant import Tenant
 from meoxa_secretary.services.settings import SettingsService
 
 logger = get_logger(__name__)
@@ -226,7 +225,7 @@ class BillingService:
             row.status = status_enum
             row.plan = plan
             row.current_period_end = (
-                datetime.fromtimestamp(period_end_ts, tz=timezone.utc)
+                datetime.fromtimestamp(period_end_ts, tz=UTC)
                 if period_end_ts
                 else None
             )
