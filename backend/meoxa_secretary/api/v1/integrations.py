@@ -68,10 +68,27 @@ def microsoft_status(auth: CurrentAuth) -> dict[str, object]:
 @router.get("/microsoft/callback")
 async def microsoft_callback(
     background: BackgroundTasks,
-    code: str = Query(...),
-    state: str = Query(...),
+    code: str | None = Query(default=None),
+    state: str | None = Query(default=None),
+    error: str | None = Query(default=None),
+    error_description: str | None = Query(default=None),
 ) -> RedirectResponse:
     """Callback OAuth Microsoft — échange le code contre des tokens et les persiste."""
+    # Cas d'erreur OAuth : Azure renvoie ?error=...&error_description=... au lieu de ?code=...
+    if error:
+        logger.warning("ms.oauth.callback_error", error=error, description=error_description)
+        frontend = get_settings().cors_origin_list[0] if get_settings().cors_origin_list else "/"
+        from urllib.parse import quote
+
+        return RedirectResponse(
+            url=f"{frontend.rstrip('/')}/app/onboarding?ms_error={quote(error)}"
+            f"&ms_error_description={quote(error_description or '')}",
+            status_code=302,
+        )
+
+    if not code or not state:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Paramètres OAuth manquants")
+
     try:
         user_id, tenant_id = state.split(":", 1)
     except ValueError as exc:
