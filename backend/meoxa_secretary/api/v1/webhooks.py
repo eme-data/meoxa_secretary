@@ -80,10 +80,16 @@ async def stripe_webhook(request: Request) -> Response:
         logger.warning("stripe.webhook.invalid_signature", error=str(exc))
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Signature invalide") from exc
 
-    # Import local pour éviter un cycle worker <-> webhook.
-    from meoxa_secretary.workers.tasks.billing import handle_stripe_event
+    # Traitement synchrone — l'opération est rapide (upsert DB + éventuellement
+    # une retrieve Subscription), et Stripe accepte jusqu'à 10s de réponse.
+    # Avantage vs Celery : évite la sérialisation JSON de l'objet `stripe.Event`.
+    try:
+        service.handle_event(event)
+    except Exception as exc:
+        logger.exception("stripe.event.handling_failed", error=str(exc))
+        # 500 → Stripe retentera automatiquement.
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Traitement échoué") from exc
 
-    handle_stripe_event.delay(event)
     AuditService.log(
         action="stripe.webhook.received",
         resource=f"stripe_event:{event.get('id', '')}",
