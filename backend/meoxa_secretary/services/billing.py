@@ -106,11 +106,15 @@ class BillingService:
 
     def parse_webhook(self, payload: bytes, signature: str) -> dict[str, Any]:
         self._assert_configured()
-        return stripe.Webhook.construct_event(
+        event = stripe.Webhook.construct_event(
             payload=payload,
             sig_header=signature,
             secret=self._webhook_secret,
         )
+        # stripe-python v8+ : stripe.Event n'hérite plus de dict et n'expose pas
+        # `.get()`. On normalise en dict natif pour que les callers (webhooks.py,
+        # AuditService) puissent utiliser `.get()` sans risque.
+        return self._to_dict(event)
 
     def handle_event(self, event: Any) -> None:
         # `event` peut être soit un dict soit un stripe.Event (qui n'a pas .get).
