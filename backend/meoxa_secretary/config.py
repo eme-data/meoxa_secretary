@@ -43,7 +43,8 @@ class Settings(BaseSettings):
     ms_client_secret: str = ""
     ms_redirect_uri: str = "http://localhost:8000/api/v1/integrations/microsoft/callback"
     ms_graph_scopes: str = (
-        "offline_access User.Read Mail.ReadWrite Calendars.ReadWrite OnlineMeetings.ReadWrite.All"
+        "offline_access User.Read Mail.ReadWrite Calendars.ReadWrite "
+        "OnlineMeetings.ReadWrite.All Files.Read.All Tasks.ReadWrite"
     )
 
     # --- Bot Teams ---

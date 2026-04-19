@@ -89,7 +89,7 @@ PLATFORM_SETTINGS: tuple[SettingDef, ...] = (
         "text",
         default=(
             "offline_access User.Read Mail.ReadWrite Calendars.ReadWrite "
-            "OnlineMeetings.ReadWrite.All"
+            "OnlineMeetings.ReadWrite.All Files.Read.All Tasks.ReadWrite"
         ),
         env_var="MS_GRAPH_SCOPES",
     ),
