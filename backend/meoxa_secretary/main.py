@@ -11,7 +11,13 @@ from slowapi.middleware import SlowAPIMiddleware
 from meoxa_secretary.api.v1 import api_router
 from meoxa_secretary.config import get_settings
 from meoxa_secretary.core.logging import configure_logging
+from meoxa_secretary.core.observability import init_sentry
 from meoxa_secretary.core.rate_limit import limiter
+
+# Init Sentry/GlitchTip avant la création de l'app FastAPI — les intégrations
+# FastApi/Starlette/Sqlalchemy/Redis captureront ensuite toutes les exceptions.
+# No-op si SENTRY_DSN n'est pas défini (cas dev/CI).
+init_sentry()
 
 settings = get_settings()
 

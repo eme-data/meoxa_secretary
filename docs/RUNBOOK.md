@@ -222,6 +222,95 @@ except Exception as e: sentry_sdk.capture_exception(e)
 
 L'erreur doit apparaître dans https://errors.meoxa.app sous 1 minute.
 
+## Smoke-test E2E : flow réunion Teams → CR
+
+À faire **avant d'ouvrir l'inscription à un nouveau client** ou après une MAJ
+majeure. Prévoir 20 min (dont ~10 min d'attente pour que Teams pousse
+l'enregistrement sur OneDrive).
+
+### Prérequis côté M365
+
+1. L'utilisateur testeur a fait son OAuth Microsoft sur `/app/onboarding`
+2. Dans Teams admin (`admin.teams.microsoft.com/policies/meetings`) :
+   - **Enregistrement automatique des réunions** : Activé
+   - **Transcription / sous-titres en direct** : Activé
+3. L'abonnement M365 du testeur inclut Teams avec cloud recording (Business Standard+)
+
+### Prérequis côté meoxa (vérif 1 min)
+
+```bash
+# Subscriptions Graph actives (mail + calendar au minimum)
+dcp exec -T postgres psql -U meoxa -d meoxa_secretary -c "
+SELECT resource_type, expires_at FROM graph_subscriptions
+WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'ton-slug');
+"
+# Workers + beat OK
+dcp ps | grep -E "worker|scheduler"
+# Clé Anthropic présente (tronquée)
+dcp exec -T backend python -c "from meoxa_secretary.services.settings import SettingsService as S; print(bool(S().get_platform('anthropic.api_key')))"
+```
+
+### Procédure de test (user)
+
+1. Dans Teams, lancer une **réunion immédiate** (pas un Meet Now privé — une
+   vraie calendar meeting pour que l'organizer soit résolu).
+2. Démarrer l'enregistrement (bouton `...` → *Démarrer l'enregistrement*).
+3. Parler 1-2 minutes avec du contenu exploitable : *"Bonjour, aujourd'hui on
+   valide le devis client Durand à 4500 €, je prends l'action d'envoyer le
+   contrat avant vendredi."*
+4. Arrêter l'enregistrement puis raccrocher.
+5. Attendre **5 à 10 min** — Teams met un délai avant de publier le fichier
+   dans `OneDrive/Recordings`.
+
+### Observables (tech) — étape par étape
+
+```bash
+# 1. Notification Graph pour le nouveau fichier OneDrive
+dcp logs --since 15m worker | grep -iE "graph.notification.received|scan_recordings"
+#    Attendu : "recording.scan.done" avec recordings >= 1
+
+# 2. Téléchargement + transcription
+dcp logs --since 15m worker | grep -iE "recording.audio|whisper.transcribe|process_recording"
+#    Attendu : "whisper.transcribe.done" (si VTT pas dispo) ou "recording.transcript.vtt_used"
+
+# 3. Génération du CR par Claude
+dcp logs --since 15m worker | grep -iE "recording.summary|meeting.summarize"
+#    Succès silencieux — vérifier en DB (étape suivante)
+
+# 4. État final en DB
+dcp exec -T postgres psql -U meoxa -d meoxa_secretary -c "
+SELECT m.title, m.status, (mt.summary_markdown IS NOT NULL) AS has_cr,
+       jsonb_array_length(mt.action_items_json) AS n_actions,
+       jsonb_array_length(mt.planner_task_ids_json) AS n_planner_pushed
+FROM meetings m LEFT JOIN meeting_transcripts mt ON mt.meeting_id = m.id
+ORDER BY m.created_at DESC LIMIT 3;
+"
+#    Attendu : status='ready', has_cr=true, n_actions>=1
+
+# 5. Envoi du mail récap
+dcp logs --since 15m worker | grep -iE "recording.email"
+#    Attendu : "recording.email.sent"
+
+# 6. Push Microsoft Planner (si planner.default_plan_id configuré pour le tenant)
+dcp logs --since 15m worker | grep -iE "planner.push|planner.pushed"
+```
+
+### Résultat final dans l'UI
+
+- `/app/meetings` : la réunion apparaît en statut **CR prêt**
+- Cliquer dessus → `/app/meetings/{id}` affiche le markdown du CR
+- L'organizer reçoit un mail avec le CR en corps
+
+### Dépannage par étape
+
+| Symptôme | Cause probable | Action |
+|---|---|---|
+| Étape 1 rien dans logs après 15 min | Teams n'a pas publié le fichier OneDrive ; `Recordings`/`Enregistrements` folder introuvable | Vérifier manuellement dans OneDrive du user que le `.mp4` est bien là |
+| `whisper.transcribe.failed` | Modèle Whisper pas téléchargé / erreur ffmpeg | `dcp exec worker whisper --model small --language fr /tmp/test.mp3` |
+| `recording.summary.failed` | Clé Anthropic invalide ou plafond mensuel atteint | Vérifier `/app/admin/platform` + `llm_usage_events` ce mois |
+| `status=ready` mais pas d'email | `organizer_email` null (meeting ad-hoc sans calendar event) | Normal — créer une vraie réunion calendarisée pour tester l'email |
+| `n_planner_pushed=0` | Pas de `planner.default_plan_id` configuré pour le tenant | `/app/admin/settings` → renseigner l'ID du plan (URL tasks.office.com) |
+
 ## Contacts d'urgence
 
 - **Email support** : contact@meoxa.app
