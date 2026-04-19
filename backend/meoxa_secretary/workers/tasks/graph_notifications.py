@@ -29,13 +29,17 @@ def process_notification(tenant_id: str, user_id: str, notification: dict[str, A
         resource=resource,
     )
 
+    # Graph renvoie la ressource en PascalCase ("Users/{id}/Messages/{id}") —
+    # on normalise en lowercase pour le routing.
+    resource_lc = resource.lower()
+
     # Routing minimaliste — on délègue aux services métier.
-    if "drive" in resource or "driveItem" in resource:
+    if "drive" in resource_lc or "driveitem" in resource_lc:
         # Notification OneDrive : peut être un nouvel enregistrement Teams.
         from meoxa_secretary.workers.tasks.meetings import scan_recordings
 
         scan_recordings.delay(tenant_id=tenant_id, user_id=user_id)
-    elif "messages" in resource:
+    elif "messages" in resource_lc:
         # `resource` ex: "Users/{userId}/Messages/AAMk..."
         message_id = resource.rsplit("/", 1)[-1]
         if message_id:
@@ -44,7 +48,7 @@ def process_notification(tenant_id: str, user_id: str, notification: dict[str, A
             ingest_message.delay(
                 tenant_id=tenant_id, user_id=user_id, message_id=message_id
             )
-    elif "events" in resource:
+    elif "events" in resource_lc:
         # TODO: fetch l'event + logique de rappel / indexation calendrier
         pass
 
