@@ -124,7 +124,7 @@ async def microsoft_callback(
 
     frontend_url = get_settings().cors_origin_list[0] if get_settings().cors_origin_list else "/"
     return RedirectResponse(
-        url=f"{frontend_url}/app/integrations?provider=microsoft&status=connected"
+        url=f"{frontend_url.rstrip('/')}/app/onboarding?provider=microsoft&status=connected"
     )
 
 
