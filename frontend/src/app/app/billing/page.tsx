@@ -39,6 +39,17 @@ export default function BillingPage() {
   }
 
   const hasSub = sub && sub.status !== "none";
+  const trialing = sub?.status === "trialing";
+  const daysLeft =
+    trialing && sub?.current_period_end
+      ? Math.max(
+          0,
+          Math.ceil(
+            (new Date(sub.current_period_end).getTime() - Date.now()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        )
+      : null;
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
@@ -52,6 +63,17 @@ export default function BillingPage() {
           Abonnement annuel, renouvelé automatiquement chaque année. Résiliable
           depuis le portail client à tout moment.
         </p>
+        {!hasSub && (
+          <p className="mt-2 inline-block rounded bg-emerald-900/40 px-2 py-1 text-xs font-semibold text-emerald-300">
+            14 jours d'essai gratuit — aucun prélèvement avant la fin de la
+            période.
+          </p>
+        )}
+        {trialing && daysLeft !== null && (
+          <p className="mt-2 rounded bg-emerald-900/40 px-3 py-2 text-sm text-emerald-200">
+            Essai gratuit en cours — il te reste {daysLeft} jour{daysLeft > 1 ? "s" : ""}.
+          </p>
+        )}
         <p className="mt-3 text-slate-400">
           Automatisation emails, comptes-rendus de réunions et agenda.
           Intégration clé en main à Microsoft 365.

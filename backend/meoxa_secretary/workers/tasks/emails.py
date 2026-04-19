@@ -239,16 +239,31 @@ def draft_reply(
         body_text = thread.body_text or thread.snippet
         subject = thread.subject
         ms_message_id = thread.ms_message_id
+        ms_conversation_id = thread.ms_conversation_id
         few_shot = get_recent_corrections(db, tenant_id)
 
     if not body_text or not ms_message_id:
         logger.info("emails.draft.skipped_empty", thread_id=thread_id)
         return False
 
+    # Historique du fil (jusqu'à 5 messages) — fournit au LLM le contexte complet.
+    try:
+        history = asyncio.run(
+            _fetch_conversation_history(
+                tenant_id, user_id, ms_conversation_id, exclude_id=ms_message_id
+            )
+        )
+    except Exception as exc:
+        logger.debug("emails.draft.history_failed", error=str(exc))
+        history = ""
+    thread_context = f"Sujet : {subject}"
+    if history:
+        thread_context += f"\n\n{history}"
+
     try:
         suggestion = LLMService(tenant_id=tenant_id).draft_email_reply(
             email_body=body_text,
-            thread_context=f"Sujet : {subject}",
+            thread_context=thread_context,
             template_prompt=template_prompt,
             few_shot_examples=few_shot or None,
         )
@@ -292,6 +307,32 @@ def draft_reply(
         logger.debug("emails.draft.notify_failed", error=str(exc))
 
     return True
+
+
+async def _fetch_conversation_history(
+    tenant_id: str, user_id: str, conversation_id: str, exclude_id: str | None
+) -> str:
+    """Récupère jusqu'à 5 messages précédents du thread, formatés pour le prompt."""
+    if not conversation_id:
+        return ""
+    graph = await MicrosoftGraphService.for_user(tenant_id, user_id)
+    try:
+        msgs = await graph.list_conversation_messages(
+            conversation_id, top=5, exclude_id=exclude_id
+        )
+    finally:
+        await graph.aclose()
+    if not msgs:
+        return ""
+    lines: list[str] = []
+    # Ordre chronologique (plus ancien → plus récent)
+    for m in reversed(msgs):
+        sender = m.get("from", {}).get("emailAddress", {}).get("address", "?")
+        received = m.get("receivedDateTime", "")
+        body_html = m.get("body", {}).get("content", "") or m.get("bodyPreview", "")
+        body = _html_to_text(body_html)[:800]
+        lines.append(f"[{received} — {sender}]\n{body}")
+    return "\n\n".join(lines)
 
 
 async def _create_outlook_draft(

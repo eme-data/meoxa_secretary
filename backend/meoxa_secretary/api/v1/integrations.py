@@ -97,6 +97,14 @@ async def microsoft_callback(
     # le redirect vers le frontend part sans attendre.
     background.add_task(_create_subscriptions_safe, tenant_id, user_id)
 
+    # Auto-détection de la signature (1er connect) — async via Celery.
+    try:
+        from meoxa_secretary.workers.tasks.onboarding import detect_signature
+
+        detect_signature.delay(tenant_id=tenant_id, user_id=user_id)
+    except Exception as exc:
+        logger.debug("integration.signature.enqueue_failed", error=str(exc))
+
     frontend_url = get_settings().cors_origin_list[0] if get_settings().cors_origin_list else "/"
     return RedirectResponse(
         url=f"{frontend_url}/app/integrations?provider=microsoft&status=connected"

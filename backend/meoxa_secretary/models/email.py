@@ -47,3 +47,8 @@ class EmailThread(Base, UUIDMixin, TimestampMixin, TenantScopedMixin):
     suggested_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
     # ID du brouillon créé dans Outlook via createReply (si on l'a poussé).
     outlook_draft_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    # Version effectivement envoyée par l'user (après édition du brouillon) — feedback loop.
+    sent_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

@@ -26,6 +26,8 @@ celery_app = Celery(
         "meoxa_secretary.workers.tasks.billing",
         "meoxa_secretary.workers.tasks.planner",
         "meoxa_secretary.workers.tasks.retention",
+        "meoxa_secretary.workers.tasks.digest",
+        "meoxa_secretary.workers.tasks.onboarding",
     ],
 )
 
@@ -64,5 +66,11 @@ celery_app.conf.beat_schedule = {
     "apply-retention-daily": {
         "task": "meoxa_secretary.workers.tasks.retention.apply_retention_all",
         "schedule": crontab(minute=30, hour=4),
+    },
+    # Digest matinal : tick une fois par heure (à :05) et chaque tenant décide
+    # de s'auto-envoyer si son heure locale == digest.hour.
+    "send-digests-hourly": {
+        "task": "meoxa_secretary.workers.tasks.digest.send_all_digests",
+        "schedule": crontab(minute=5, hour="*"),
     },
 }

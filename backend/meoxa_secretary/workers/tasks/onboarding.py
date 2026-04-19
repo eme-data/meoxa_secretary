@@ -11,10 +11,13 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 from meoxa_secretary.core.logging import get_logger
+from meoxa_secretary.database import SessionLocal
 from meoxa_secretary.models.memory import MemorySourceType
 from meoxa_secretary.services.context import ContextService
 from meoxa_secretary.services.microsoft_graph import MicrosoftGraphService
 from meoxa_secretary.services.microsoft_integration import MicrosoftIntegrationError
+from meoxa_secretary.services.settings import SettingsService
+from meoxa_secretary.services.signature_detector import detect_signature_from_messages
 from meoxa_secretary.workers.celery_app import celery_app
 
 logger = get_logger(__name__)
@@ -70,3 +73,46 @@ async def _import(tenant_id: str, user_id: str, days: int) -> int:
             logger.warning("onboarding.import.item_failed", error=str(exc))
 
     return indexed
+
+
+@celery_app.task(name="meoxa_secretary.workers.tasks.onboarding.detect_signature")
+def detect_signature(tenant_id: str, user_id: str) -> bool:
+    """Scanne sentItems et écrit la signature détectée si champ vide.
+
+    Non destructif : si l'user a déjà une signature configurée, on n'écrase pas.
+    Retourne True si une signature a été écrite.
+    """
+    settings = SettingsService()
+    existing = settings.get_tenant(tenant_id, "general.email_signature")
+    if existing and existing.strip():
+        logger.debug("signature.skip.already_set", tenant_id=tenant_id)
+        return False
+
+    try:
+        messages = asyncio.run(_fetch_sent(tenant_id, user_id))
+    except MicrosoftIntegrationError as exc:
+        logger.warning("signature.ms_error", error=str(exc))
+        return False
+
+    sig = detect_signature_from_messages(messages)
+    if not sig:
+        logger.info("signature.no_pattern", tenant_id=tenant_id)
+        return False
+
+    with SessionLocal() as db:
+        from sqlalchemy import text
+
+        db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": tenant_id})
+        settings.set_tenant(tenant_id, "general.email_signature", sig, db)
+        db.commit()
+
+    logger.info("signature.detected", tenant_id=tenant_id, lines=sig.count("\n") + 1)
+    return True
+
+
+async def _fetch_sent(tenant_id: str, user_id: str) -> list[dict]:
+    graph = await MicrosoftGraphService.for_user(tenant_id, user_id)
+    try:
+        return await graph.list_sent_messages(top=20)
+    finally:
+        await graph.aclose()

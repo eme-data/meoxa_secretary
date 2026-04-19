@@ -48,17 +48,43 @@ class BillingService:
         self._assert_configured()
         customer_id = self._get_or_create_customer_id(tenant_id, tenant_name, customer_email)
 
-        session = stripe.checkout.Session.create(
-            mode="subscription",
-            customer=customer_id,
-            line_items=[{"price": self._price_id, "quantity": 1}],
-            success_url=f"{self._frontend_url}/app/billing?status=success",
-            cancel_url=f"{self._frontend_url}/app/billing?status=cancelled",
-            client_reference_id=str(tenant_id),
-            metadata={"tenant_id": str(tenant_id)},
-            allow_promotion_codes=True,
-        )
+        trial_days = self._trial_days_if_first_subscription(tenant_id)
+
+        params: dict[str, Any] = {
+            "mode": "subscription",
+            "customer": customer_id,
+            "line_items": [{"price": self._price_id, "quantity": 1}],
+            "success_url": f"{self._frontend_url}/app/billing?status=success",
+            "cancel_url": f"{self._frontend_url}/app/billing?status=cancelled",
+            "client_reference_id": str(tenant_id),
+            "metadata": {"tenant_id": str(tenant_id)},
+            "allow_promotion_codes": True,
+        }
+        if trial_days > 0:
+            params["subscription_data"] = {"trial_period_days": trial_days}
+
+        session = stripe.checkout.Session.create(**params)
         return session.url or ""
+
+    def _trial_days_if_first_subscription(self, tenant_id: str | UUID) -> int:
+        """Renvoie le nombre de jours d'essai si ce tenant n'a jamais eu d'abonnement.
+
+        Évite qu'un client qui annule puis resouscrit obtienne un nouvel essai.
+        """
+        try:
+            days = int(SettingsService().get_platform("stripe.trial_days") or "0")
+        except (TypeError, ValueError):
+            days = 0
+        if days <= 0:
+            return 0
+        with self._tenant_session(str(tenant_id)) as db:
+            sub = db.scalar(
+                select(TenantSubscription).where(TenantSubscription.tenant_id == tenant_id)
+            )
+            if sub and sub.stripe_subscription_id:
+                # Déjà eu un abo — pas de nouvel essai.
+                return 0
+        return days
 
     def create_portal_session(self, tenant_id: str | UUID) -> str:
         self._assert_configured()

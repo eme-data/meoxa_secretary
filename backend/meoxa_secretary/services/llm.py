@@ -41,8 +41,17 @@ class LLMService:
         self._context = ContextService() if tenant_id else None
 
     def _model_for_task(self, task: str) -> str:
-        """Choisit le modèle en tenant compte de la préférence du tenant."""
+        """Choisit le modèle en tenant compte de la préférence du tenant.
+
+        Si le tenant a dépassé son plafond mensuel, on force Haiku (modèle le
+        moins cher) quelle que soit la préférence configurée.
+        """
         if self._tenant_id:
+            from meoxa_secretary.services.cost_guardrail import is_over_monthly_budget
+
+            if is_over_monthly_budget(self._tenant_id):
+                return "claude-haiku-4-5-20251001"
+
             pref = SettingsService().get_tenant(self._tenant_id, "llm.model_preference")
             if pref == "advanced":
                 return self._advanced_model
@@ -148,8 +157,20 @@ class LLMService:
             logger.warning("llm.actions.parse_failed", error=str(exc))
             return []
 
-    def draft_email_reply(self, email_body: str, thread_context: str = "") -> str:
-        """Propose un brouillon de réponse à un email."""
+    def draft_email_reply(
+        self,
+        email_body: str,
+        thread_context: str = "",
+        *,
+        template_prompt: str | None = None,
+        few_shot_examples: list[tuple[str, str]] | None = None,
+    ) -> str:
+        """Propose un brouillon de réponse à un email.
+
+        - `template_prompt` override le system prompt (via un template choisi par l'user).
+        - `few_shot_examples` = liste de (brouillon_généré, version_envoyée) pour que
+          Claude apprenne le ton du user à partir de ses éditions passées.
+        """
         tone = "professionnel"
         signature = ""
         if self._tenant_id:
@@ -157,12 +178,27 @@ class LLMService:
             tone = s.get_tenant(self._tenant_id, "emails.reply_tone") or tone
             signature = s.get_tenant(self._tenant_id, "general.email_signature")
 
-        system = (
-            f"Tu es un assistant qui rédige des réponses courtes, ton {tone}, en français, à des "
-            "emails professionnels. Tu ne fais que proposer un brouillon — pas d'envoi."
-        )
+        if template_prompt:
+            system = template_prompt.strip()
+        else:
+            system = (
+                f"Tu es un assistant qui rédige des réponses courtes, ton {tone}, en français, à des "
+                "emails professionnels. Tu ne fais que proposer un brouillon — pas d'envoi."
+            )
         if signature:
             system += f"\n\nSignature à ajouter en fin de réponse :\n{signature}"
+
+        if few_shot_examples:
+            system += (
+                "\n\nExemples de corrections passées (le user a préféré la version envoyée). "
+                "Imite ce ton et ce style :"
+            )
+            for i, (draft, sent) in enumerate(few_shot_examples[:3], 1):
+                system += (
+                    f"\n\n--- Exemple {i} ---\n"
+                    f"Brouillon généré :\n{draft[:400]}\n\n"
+                    f"Version envoyée (à imiter) :\n{sent[:400]}"
+                )
 
         rag = self._retrieve_context(email_body)
 

@@ -99,6 +99,18 @@ class MicrosoftGraphService:
         )
         return data.get("value", [])
 
+    async def list_sent_messages(self, top: int = 20) -> list[dict[str, Any]]:
+        """Derniers messages envoyés (sentItems) — pour auto-détecter la signature."""
+        data = await self._get(
+            "/me/mailFolders/sentitems/messages",
+            **{
+                "$top": top,
+                "$orderby": "sentDateTime desc",
+                "$select": "id,subject,body,sentDateTime",
+            },
+        )
+        return data.get("value", [])
+
     async def list_inbox_messages(self, top: int = 25) -> list[dict[str, Any]]:
         data = await self._get(
             "/me/mailFolders/inbox/messages",
@@ -124,6 +136,29 @@ class MicrosoftGraphService:
     async def get_message(self, message_id: str) -> dict[str, Any]:
         """Récupère le détail d'un message (headers + body)."""
         return await self._get(f"/me/messages/{message_id}")
+
+    async def list_conversation_messages(
+        self, conversation_id: str, top: int = 5, exclude_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Messages d'un même fil de discussion (conversationId), du plus récent au plus ancien.
+
+        Utilisé pour injecter l'historique complet lors de la rédaction d'un brouillon.
+        """
+        if not conversation_id:
+            return []
+        data = await self._get(
+            "/me/messages",
+            **{
+                "$filter": f"conversationId eq '{conversation_id}'",
+                "$orderby": "receivedDateTime desc",
+                "$top": top + (1 if exclude_id else 0),
+                "$select": "id,subject,from,receivedDateTime,bodyPreview,body",
+            },
+        )
+        items = data.get("value", [])
+        if exclude_id:
+            items = [m for m in items if m.get("id") != exclude_id]
+        return items[:top]
 
     async def create_reply_draft(self, message_id: str) -> dict[str, Any]:
         """Crée un brouillon de réponse dans Outlook et le renvoie."""

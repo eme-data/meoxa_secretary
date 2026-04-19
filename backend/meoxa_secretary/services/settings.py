@@ -139,6 +139,12 @@ PLATFORM_SETTINGS: tuple[SettingDef, ...] = (
         "dans le dashboard Stripe.",
         "secret",
     ),
+    SettingDef(
+        "stripe.trial_days", "Stripe — Jours d'essai gratuit",
+        "Nombre de jours d'essai offerts à la souscription (Stripe trial_period_days). "
+        "0 = pas d'essai. Défaut : 14.",
+        "string", default="14",
+    ),
     # Voyage AI (embeddings pour RAG)
     SettingDef(
         "voyage.api_key", "Voyage AI — API Key",
@@ -254,6 +260,31 @@ TENANT_SETTINGS: tuple[SettingDef, ...] = (
         "URL du webhook entrant Teams. Dans un canal Teams → Connecteurs → "
         "Incoming Webhook → Configurer.",
         "secret",
+    ),
+    # Digest matinal
+    SettingDef(
+        "digest.enabled",
+        "Digest matinal",
+        "Recevoir chaque matin un email récap (emails urgents, réunions, brouillons prêts).",
+        "bool",
+        default="true",
+    ),
+    SettingDef(
+        "digest.hour",
+        "Heure d'envoi du digest",
+        "Heure locale (0-23) à laquelle le digest est envoyé. Défaut : 7h.",
+        "string",
+        default="7",
+    ),
+    # Garde-fou coût LLM
+    SettingDef(
+        "llm.cost_limit_usd_monthly",
+        "Plafond mensuel LLM (USD)",
+        "Au-delà de ce montant dans le mois courant, Secretary bascule "
+        "automatiquement sur le modèle le moins cher (Haiku) et envoie un "
+        "email d'alerte. 0 = aucun plafond.",
+        "string",
+        default="50",
     ),
     # Notion (connecteur sortant)
     SettingDef(
