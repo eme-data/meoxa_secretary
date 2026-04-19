@@ -268,10 +268,12 @@ class BillingService:
         # Lookup via métadonnées Stripe (on a mis `tenant_id` dessus à la création).
         try:
             customer = stripe.Customer.retrieve(customer_id)
-            return customer.metadata.get("tenant_id") if customer.metadata else None
         except stripe.StripeError as exc:
             logger.warning("stripe.customer.lookup_failed", error=str(exc))
             return None
+        # customer.metadata est un StripeObject (pas un dict en v8+) : on normalise.
+        metadata = self._to_dict(getattr(customer, "metadata", None))
+        return metadata.get("tenant_id") if metadata else None
 
     def _assert_configured(self) -> None:
         if not self._api_key or not self._price_id:

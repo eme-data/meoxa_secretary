@@ -180,7 +180,9 @@ class MicrosoftIntegrationService:
         )
 
     def _scopes(self) -> list[str]:
-        return self._settings.get_platform("microsoft.graph_scopes").split()
+        from meoxa_secretary.services.microsoft_graph import _sanitize_scopes
+
+        return _sanitize_scopes(self._settings.get_platform("microsoft.graph_scopes"))
 
     @staticmethod
     def _tenant_session(tenant_id: str):

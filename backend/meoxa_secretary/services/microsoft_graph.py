@@ -23,6 +23,13 @@ from meoxa_secretary.services.settings import SettingsService
 logger = get_logger(__name__)
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 
+# MSAL ajoute automatiquement ces scopes et refuse qu'on les passe explicitement.
+_MSAL_RESERVED_SCOPES = {"openid", "profile", "offline_access"}
+
+
+def _sanitize_scopes(raw: str) -> list[str]:
+    return [s for s in raw.split() if s and s not in _MSAL_RESERVED_SCOPES]
+
 
 class MicrosoftOAuthService:
     """Gère le flux OAuth 'authorization code' pour les comptes Microsoft 365."""
@@ -33,7 +40,7 @@ class MicrosoftOAuthService:
         self._client_secret = s.get_platform("microsoft.client_secret")
         self._tenant_id = s.get_platform("microsoft.tenant_id") or "common"
         self._redirect_uri = s.get_platform("microsoft.redirect_uri")
-        self._scopes = s.get_platform("microsoft.graph_scopes").split()
+        self._scopes = _sanitize_scopes(s.get_platform("microsoft.graph_scopes"))
 
         if not self._client_id or not self._client_secret:
             raise MicrosoftIntegrationError(
