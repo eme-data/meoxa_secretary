@@ -380,7 +380,7 @@ export default function OnboardingPage() {
                   2FA activée
                 </span>
                 <button
-                  onClick={() => setStep("billing")}
+                  onClick={() => setStep("done")}
                   className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:bg-brand-dark"
                 >
                   Continuer
@@ -395,7 +395,7 @@ export default function OnboardingPage() {
                   Activer la 2FA
                 </Link>
                 <button
-                  onClick={() => setStep("billing")}
+                  onClick={() => setStep("done")}
                   className="rounded-lg border border-slate-700 px-5 py-2 font-semibold text-slate-200 hover:bg-slate-800"
                 >
                   Plus tard
