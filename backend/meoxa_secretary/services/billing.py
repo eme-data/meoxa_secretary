@@ -112,7 +112,20 @@ class BillingService:
             secret=self._webhook_secret,
         )
 
-    def handle_event(self, event: dict[str, Any]) -> None:
+    def handle_event(self, event: Any) -> None:
+        # `event` peut être soit un dict soit un stripe.Event (qui n'a pas .get).
+        # On normalise en dict pour simplifier.
+        if hasattr(event, "to_dict_recursive"):
+            event = event.to_dict_recursive()
+        elif hasattr(event, "to_dict"):
+            event = event.to_dict()
+        elif not isinstance(event, dict):
+            # Fallback : Stripe objects supportent dict(...)
+            try:
+                event = dict(event)
+            except Exception:
+                event = {}
+
         event_type = event.get("type", "")
         obj = event.get("data", {}).get("object", {})
 
