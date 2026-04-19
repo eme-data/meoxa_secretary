@@ -142,6 +142,20 @@ class BillingService:
 
     # ---------------- Upserts ----------------
 
+    @staticmethod
+    def _to_dict(obj: Any) -> dict[str, Any]:
+        """Normalise un stripe.StripeObject ou dict en dict natif (récursif)."""
+        if hasattr(obj, "to_dict_recursive"):
+            return obj.to_dict_recursive()
+        if hasattr(obj, "to_dict"):
+            return obj.to_dict()
+        if isinstance(obj, dict):
+            return obj
+        try:
+            return dict(obj)
+        except Exception:
+            return {}
+
     def _upsert_from_checkout(self, session_obj: dict[str, Any]) -> None:
         tenant_id = session_obj.get("client_reference_id") or session_obj.get(
             "metadata", {}
@@ -151,7 +165,7 @@ class BillingService:
         if not tenant_id or not subscription_id:
             return
 
-        sub_obj = stripe.Subscription.retrieve(subscription_id)
+        sub_obj = self._to_dict(stripe.Subscription.retrieve(subscription_id))
         self._persist(
             tenant_id=tenant_id,
             customer_id=customer_id,
@@ -159,6 +173,7 @@ class BillingService:
         )
 
     def _upsert_from_subscription(self, sub_obj: dict[str, Any]) -> None:
+        sub_obj = self._to_dict(sub_obj)
         customer_id = sub_obj.get("customer")
         if not customer_id:
             return
@@ -172,20 +187,23 @@ class BillingService:
     def _persist(
         self, tenant_id: str, customer_id: str | None, subscription_obj: Any
     ) -> None:
-        status_str = getattr(subscription_obj, "status", None) or subscription_obj.get("status")
-        period_end_ts = getattr(subscription_obj, "current_period_end", None) or subscription_obj.get(
-            "current_period_end"
-        )
-        cancel_at_period_end = getattr(
-            subscription_obj, "cancel_at_period_end", False
-        ) or subscription_obj.get("cancel_at_period_end", False)
+        sub_data = self._to_dict(subscription_obj)
 
-        items = getattr(subscription_obj, "items", None) or subscription_obj.get("items", {})
+        subscription_id = sub_data.get("id")
+        status_str = sub_data.get("status")
+        cancel_at_period_end = bool(sub_data.get("cancel_at_period_end", False))
+
+        # Extraction des infos item (price + period_end). Depuis l'API 2024-06-20+,
+        # `current_period_end` a migré vers l'item (plus de top-level).
+        items_data = (sub_data.get("items") or {}).get("data") or []
         plan = None
-        item_data = items.get("data") if isinstance(items, dict) else getattr(items, "data", None)
-        if item_data:
-            price = item_data[0].get("price") if isinstance(item_data[0], dict) else item_data[0].price
-            plan = price.get("id") if isinstance(price, dict) else price.id
+        period_end_ts = sub_data.get("current_period_end")  # legacy
+        if items_data:
+            first = items_data[0]
+            price = first.get("price") or {}
+            plan = price.get("id")
+            if not period_end_ts:
+                period_end_ts = first.get("current_period_end")
 
         try:
             status_enum = SubscriptionStatus(status_str)
@@ -193,24 +211,22 @@ class BillingService:
             status_enum = SubscriptionStatus.NONE
 
         with self._tenant_session(str(tenant_id)) as db:
-            sub = db.scalar(
+            row = db.scalar(
                 select(TenantSubscription).where(TenantSubscription.tenant_id == tenant_id)
             )
-            if not sub:
-                sub = TenantSubscription(tenant_id=tenant_id)  # type: ignore[arg-type]
-                db.add(sub)
-            sub.stripe_customer_id = customer_id
-            sub.stripe_subscription_id = (
-                getattr(subscription_obj, "id", None) or subscription_obj.get("id")
-            )
-            sub.status = status_enum
-            sub.plan = plan
-            sub.current_period_end = (
+            if not row:
+                row = TenantSubscription(tenant_id=tenant_id)  # type: ignore[arg-type]
+                db.add(row)
+            row.stripe_customer_id = customer_id
+            row.stripe_subscription_id = subscription_id
+            row.status = status_enum
+            row.plan = plan
+            row.current_period_end = (
                 datetime.fromtimestamp(period_end_ts, tz=timezone.utc)
                 if period_end_ts
                 else None
             )
-            sub.cancel_at_period_end = bool(cancel_at_period_end)
+            row.cancel_at_period_end = cancel_at_period_end
 
     # ---------------- Helpers ----------------
 
