@@ -48,7 +48,10 @@ def signup(request: Request, body: SignupRequest, db: DBDep) -> TokenPair:
     if db.scalar(select(User).where(User.email == body.email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "Email déjà utilisé")
 
-    tenant = Tenant(name=body.organization_name, slug=slugify(body.organization_name)[:80])
+    tenant = Tenant(
+        name=body.organization_name,
+        slug=_unique_tenant_slug(db, body.organization_name),
+    )
     db.add(tenant)
     db.flush()
 
@@ -249,6 +252,22 @@ def _client_ip(request: Request) -> str | None:
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else None
+
+
+def _unique_tenant_slug(db: Session, organization_name: str) -> str:
+    """Génère un slug unique, en suffixant -2/-3/... si collision.
+
+    Évite l'IntegrityError quand deux tenants s'appellent pareil (fréquent
+    pour les noms génériques comme « Cabinet Durand »).
+    """
+    base = slugify(organization_name)[:76] or "tenant"
+    candidate = base
+    n = 2
+    while db.scalar(select(Tenant).where(Tenant.slug == candidate)):
+        suffix = f"-{n}"
+        candidate = f"{base[: 80 - len(suffix)]}{suffix}"
+        n += 1
+    return candidate
 
 
 # ---------------- Acceptation d'invitation ----------------
