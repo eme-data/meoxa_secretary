@@ -88,8 +88,8 @@ PLATFORM_SETTINGS: tuple[SettingDef, ...] = (
         "Scopes demandés au consentement (séparés par des espaces).",
         "text",
         default=(
-            "offline_access User.Read Mail.ReadWrite Calendars.ReadWrite "
-            "OnlineMeetings.ReadWrite.All Files.Read.All Tasks.ReadWrite"
+            "User.Read Mail.ReadWrite Calendars.ReadWrite "
+            "OnlineMeetings.ReadWrite Files.Read.All Tasks.ReadWrite"
         ),
         env_var="MS_GRAPH_SCOPES",
     ),
