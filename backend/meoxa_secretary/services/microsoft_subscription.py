@@ -41,6 +41,15 @@ RESOURCE_PATHS: dict[GraphResourceType, str] = {
     GraphResourceType.RECORDINGS: "/me/drive/root",
 }
 
+# Microsoft Graph refuse certains changeTypes selon la ressource. Les
+# subscriptions DriveItem (OneDrive) n'acceptent que "updated" — passer
+# "created,updated" fait échouer la création avec InvalidRequest.
+RESOURCE_CHANGE_TYPES: dict[GraphResourceType, str] = {
+    GraphResourceType.MAIL: "created,updated",
+    GraphResourceType.CALENDAR: "created,updated",
+    GraphResourceType.RECORDINGS: "updated",
+}
+
 
 class MicrosoftSubscriptionService:
     def __init__(self) -> None:
@@ -69,11 +78,21 @@ class MicrosoftSubscriptionService:
             timeout=30,
         ) as client:
             for resource_type, path in RESOURCE_PATHS.items():
-                await self._delete_existing(tenant_id, user_id, resource_type, client)
-                sub_id = await self._create_single(
-                    tenant_id, user_id, resource_type, path, client
-                )
-                created.append(sub_id)
+                try:
+                    await self._delete_existing(tenant_id, user_id, resource_type, client)
+                    sub_id = await self._create_single(
+                        tenant_id, user_id, resource_type, path, client
+                    )
+                    created.append(sub_id)
+                except Exception as exc:
+                    # On isole les échecs par resource pour ne pas bloquer les
+                    # autres types (ex: recordings peut échouer si la boîte
+                    # OneDrive n'est pas provisionnée, mais mail+calendar OK).
+                    logger.warning(
+                        "graph.subscription.create_failed",
+                        resource=resource_type.value,
+                        error=str(exc),
+                    )
 
         return created
 
@@ -87,9 +106,10 @@ class MicrosoftSubscriptionService:
     ) -> str:
         client_state = secrets.token_urlsafe(32)
         expires_at = datetime.now(UTC) + SUBSCRIPTION_TTL
+        change_type = RESOURCE_CHANGE_TYPES[resource_type]
 
         payload = {
-            "changeType": "created,updated",
+            "changeType": change_type,
             "notificationUrl": self.notification_url,
             "resource": path,
             "expirationDateTime": expires_at.isoformat().replace("+00:00", "Z"),
@@ -107,7 +127,7 @@ class MicrosoftSubscriptionService:
                     subscription_id=data["id"],
                     resource_type=resource_type,
                     resource_path=path,
-                    change_type="created,updated",
+                    change_type=change_type,
                     client_state=client_state,
                     expires_at=expires_at,
                 )
